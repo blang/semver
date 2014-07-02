@@ -81,6 +81,8 @@ var compareTests = []compareTest{
 	{Version{2, 0, 0, nil, nil}, Version{2, 1, 0, nil, nil}, -1},
 	{Version{2, 1, 0, nil, nil}, Version{2, 1, 1, nil, nil}, -1},
 
+	// Spec Examples #9
+	{Version{1, 0, 0, nil, nil}, Version{1, 0, 0, []*PRVersion{prstr("alpha")}, nil}, 1},
 	{Version{1, 0, 0, []*PRVersion{prstr("alpha")}, nil}, Version{1, 0, 0, []*PRVersion{prstr("alpha"), prnum(1)}, nil}, -1},
 	{Version{1, 0, 0, []*PRVersion{prstr("alpha"), prnum(1)}, nil}, Version{1, 0, 0, []*PRVersion{prstr("alpha"), prstr("beta")}, nil}, -1},
 	{Version{1, 0, 0, []*PRVersion{prstr("alpha"), prstr("beta")}, nil}, Version{1, 0, 0, []*PRVersion{prstr("beta")}, nil}, -1},
