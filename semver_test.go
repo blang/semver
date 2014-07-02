@@ -129,6 +129,17 @@ var wrongformatTests = []wrongformatTest{
 	{nil, "-1.1.1"},
 	{nil, "1.-1.1"},
 	{nil, "1.1.-1"},
+	// Leading zeroes
+	{nil, "01.1.1"},
+	{nil, "001.1.1"},
+	{nil, "1.01.1"},
+	{nil, "1.001.1"},
+	{nil, "1.1.01"},
+	{nil, "1.1.001"},
+	{nil, "1.1.1-01"},
+	{nil, "1.1.1-001"},
+	{nil, "1.1.1-beta.01"},
+	{nil, "1.1.1-beta.001"},
 	{&Version{0, 0, 0, []*PRVersion{prstr("!")}, nil}, "0.0.0-!"},
 	{&Version{0, 0, 0, nil, []string{"!"}}, "0.0.0+!"},
 	// empty prversion

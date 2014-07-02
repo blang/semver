@@ -189,6 +189,9 @@ func Parse(s string) (*Version, error) {
 	if !containsOnly(parts[0], NUMBERS) {
 		return nil, fmt.Errorf("Invalid character(s) found in major number %q", parts[0])
 	}
+	if hasLeadingZeroes(parts[0]) {
+		return nil, fmt.Errorf("Major number must not contain leading zeroes %q", parts[0])
+	}
 	major, err := strconv.ParseUint(parts[0], 10, 64)
 	if err != nil {
 		return nil, err
@@ -197,6 +200,9 @@ func Parse(s string) (*Version, error) {
 	// Minor
 	if !containsOnly(parts[1], NUMBERS) {
 		return nil, fmt.Errorf("Invalid character(s) found in minor number %q", parts[1])
+	}
+	if hasLeadingZeroes(parts[1]) {
+		return nil, fmt.Errorf("Minor number must not contain leading zeroes %q", parts[1])
 	}
 	minor, err := strconv.ParseUint(parts[1], 10, 64)
 	if err != nil {
@@ -226,6 +232,9 @@ func Parse(s string) (*Version, error) {
 
 	if !containsOnly(parts[2][:subVersionIndex], NUMBERS) {
 		return nil, fmt.Errorf("Invalid character(s) found in patch number %q", parts[2][:subVersionIndex])
+	}
+	if hasLeadingZeroes(parts[2][:subVersionIndex]) {
+		return nil, fmt.Errorf("Patch number must not contain leading zeroes %q", parts[2][:subVersionIndex])
 	}
 	patch, err := strconv.ParseUint(parts[2][:subVersionIndex], 10, 64)
 	if err != nil {
@@ -286,6 +295,9 @@ func NewPRVersion(s string) (*PRVersion, error) {
 	}
 	v := &PRVersion{}
 	if containsOnly(s, NUMBERS) {
+		if hasLeadingZeroes(s) {
+			return nil, fmt.Errorf("Numeric PreRelease version must not contain leading zeroes %q", s)
+		}
 		num, err := strconv.ParseUint(s, 10, 64)
 
 		// Might never be hit, but just in case
@@ -348,6 +360,16 @@ func containsOnly(s string, set string) bool {
 	return strings.IndexFunc(s, func(r rune) bool {
 		return !strings.ContainsRune(set, r)
 	}) == -1
+}
+
+func hasLeadingZeroes(s string) bool {
+	if len(s) <= 1 {
+		return false
+	}
+	if s[0] == '0' {
+		return true
+	}
+	return false
 }
 
 // Creates a new valid build version
