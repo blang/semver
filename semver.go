@@ -168,6 +168,11 @@ func (v *Version) Validate() error {
 	return nil
 }
 
+// Alias for Parse
+func New(s string) (*Version, error) {
+	return Parse(s)
+}
+
 // Parses a string to version
 func Parse(s string) (*Version, error) {
 	if len(s) == 0 {
@@ -343,4 +348,15 @@ func containsOnly(s string, set string) bool {
 	return strings.IndexFunc(s, func(r rune) bool {
 		return !strings.ContainsRune(set, r)
 	}) == -1
+}
+
+// Creates a new valid build version
+func NewBuildVersion(s string) (string, error) {
+	if len(s) == 0 {
+		return "", errors.New("Buildversion is empty")
+	}
+	if !containsOnly(s, ALPHAS+NUMBERS) {
+		return "", fmt.Errorf("Invalid character(s) found in build meta data %q", s)
+	}
+	return s, nil
 }

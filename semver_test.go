@@ -1,7 +1,5 @@
 package semver
 
-//TODO: Test incorrect version formats
-
 import (
 	"testing"
 )
@@ -198,5 +196,113 @@ func TestPreReleaseVersions(t *testing.T) {
 	}
 	if err != nil {
 		t.Errorf("Not expected error %q", err)
+	}
+}
+
+func TestBuildMetaDataVersions(t *testing.T) {
+	_, err := NewBuildVersion("123")
+	if err != nil {
+		t.Errorf("Unexpected error %q", err)
+	}
+
+	_, err = NewBuildVersion("build")
+	if err != nil {
+		t.Errorf("Unexpected error %q", err)
+	}
+
+	_, err = NewBuildVersion("test?")
+	if err == nil {
+		t.Error("Expected error, got none")
+	}
+
+	_, err = NewBuildVersion("")
+	if err == nil {
+		t.Error("Expected error, got none")
+	}
+}
+
+func TestNewHelper(t *testing.T) {
+	v, err := New("1.2.3")
+	if err != nil {
+		t.Fatalf("Unexpected error %q", err)
+	}
+	if v.Compare(&Version{1, 2, 3, nil, nil}) != 0 {
+		t.Fatal("Unexpected comparison problem")
+	}
+}
+
+func BenchmarkParseSimple(b *testing.B) {
+	const VERSION = "0.0.1"
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		New(VERSION)
+	}
+}
+
+func BenchmarkParseComplex(b *testing.B) {
+	const VERSION = "0.0.1-alpha.preview+123.456"
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		New(VERSION)
+	}
+}
+
+func BenchmarkParseAverage(b *testing.B) {
+	l := len(formatTests)
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		New(formatTests[n%l].result)
+	}
+}
+
+func BenchmarkValidateSimple(b *testing.B) {
+	const VERSION = "0.0.1"
+	v, _ := New(VERSION)
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		v.Validate()
+	}
+}
+
+func BenchmarkValidateComplex(b *testing.B) {
+	const VERSION = "0.0.1-alpha.preview+123.456"
+	v, _ := New(VERSION)
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		v.Validate()
+	}
+}
+
+func BenchmarkValidateAverage(b *testing.B) {
+	l := len(formatTests)
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		formatTests[n%l].v.Validate()
+	}
+}
+
+func BenchmarkCompareSimple(b *testing.B) {
+	const VERSION = "0.0.1"
+	v, _ := New(VERSION)
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		v.Compare(v)
+	}
+}
+
+func BenchmarkCompareComplex(b *testing.B) {
+	const VERSION = "0.0.1-alpha.preview+123.456"
+	v, _ := New(VERSION)
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		v.Compare(v)
+	}
+}
+
+func BenchmarkCompareAverage(b *testing.B) {
+	l := len(compareTests)
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		compareTests[n%l].v1.Compare(&(compareTests[n%l].v2))
 	}
 }
