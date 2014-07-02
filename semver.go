@@ -8,7 +8,11 @@ import (
 	"strings"
 )
 
-var SEMVER_SPEC_VERSION = Version{
+const NUMBERS = "0123456789"
+const ALPHAS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-"
+
+// Latest fully supported spec version
+var SPEC_VERSION = Version{
 	Major: 2,
 	Minor: 0,
 	Patch: 0,
@@ -22,6 +26,7 @@ type Version struct {
 	Build []string //No Precendence
 }
 
+// Version to string
 func (v *Version) String() string {
 	var buf bytes.Buffer
 	var DOT = []byte(".")
@@ -53,6 +58,30 @@ func (v *Version) String() string {
 	return buf.String()
 }
 
+// Checks if v is greater than o.
+func (v *Version) GT(o *Version) bool {
+	return (v.Compare(o) == 1)
+}
+
+// Checks if v is greater than or equal to o.
+func (v *Version) GTE(o *Version) bool {
+	return (v.Compare(o) >= 0)
+}
+
+// Checks if v is less than o.
+func (v *Version) LT(o *Version) bool {
+	return (v.Compare(o) == -1)
+}
+
+// Checks if v is less than or equal to o.
+func (v *Version) LTE(o *Version) bool {
+	return (v.Compare(o) <= 0)
+}
+
+// Compares Versions v to o:
+// -1 == v is less than o
+// 0 == v is equal to o
+// 1 == v is greater than o
 func (v *Version) Compare(o *Version) int {
 	if v.Major != o.Major {
 		if v.Major > o.Major {
@@ -108,16 +137,50 @@ func (v *Version) Compare(o *Version) int {
 	}
 }
 
+// Validates v and returns error in case
+func (v *Version) Validate() error {
+	// Major, Minor, Patch already validated using uint64
+
+	if len(v.Pre) > 0 {
+		for _, pre := range v.Pre {
+			if !pre.IsNum { //Numeric prerelease versions already uint64
+				if len(pre.VersionStr) == 0 {
+					return fmt.Errorf("Prerelease can not be empty %q", pre.VersionStr)
+				}
+				if !containsOnly(pre.VersionStr, NUMBERS+ALPHAS) {
+					return fmt.Errorf("Invalid character(s) found in prerelease %q", pre.VersionStr)
+				}
+			}
+		}
+	}
+
+	if len(v.Build) > 0 {
+		for _, build := range v.Build {
+			if len(build) == 0 {
+				return fmt.Errorf("Build meta data can not be empty %q", build)
+			}
+			if !containsOnly(build, ALPHAS+NUMBERS) {
+				return fmt.Errorf("Invalid character(s) found in build meta data %q", build)
+			}
+		}
+	}
+
+	return nil
+}
+
+// Parses a string to version
 func Parse(s string) (*Version, error) {
 	if len(s) == 0 {
 		return nil, errors.New("Version string empty")
 	}
 
+	// Split into major.minor.(patch+pr+meta)
 	parts := strings.SplitN(s, ".", 3)
 	if len(parts) != 3 {
 		return nil, errors.New("No Major.Minor.Patch elements found")
 	}
 
+	// Major
 	if !containsOnly(parts[0], NUMBERS) {
 		return nil, fmt.Errorf("Invalid character(s) found in major number %q", parts[0])
 	}
@@ -126,6 +189,7 @@ func Parse(s string) (*Version, error) {
 		return nil, err
 	}
 
+	// Minor
 	if !containsOnly(parts[1], NUMBERS) {
 		return nil, fmt.Errorf("Invalid character(s) found in minor number %q", parts[1])
 	}
@@ -137,6 +201,7 @@ func Parse(s string) (*Version, error) {
 	preIndex := strings.Index(parts[2], "-")
 	buildIndex := strings.Index(parts[2], "+")
 
+	// Determine last index of patch version (first of pre or build versions)
 	var subVersionIndex int
 	if preIndex != -1 && buildIndex == -1 {
 		subVersionIndex = preIndex
@@ -145,7 +210,7 @@ func Parse(s string) (*Version, error) {
 	} else if preIndex == -1 && buildIndex == -1 {
 		subVersionIndex = len(parts[2])
 	} else {
-		// if there is no actual preIndex but a hyphen inside the build meta data
+		// if there is no actual prversion but a hyphen inside the build meta data
 		if buildIndex < preIndex {
 			subVersionIndex = buildIndex
 			preIndex = -1 // Build meta data before preIndex found implicates there are no prerelease versions
@@ -189,6 +254,9 @@ func Parse(s string) (*Version, error) {
 		buildStr := parts[2][buildIndex+1:]
 		buildParts := strings.Split(buildStr, ".")
 		for _, str := range buildParts {
+			if len(str) == 0 {
+				return nil, errors.New("Build meta data is empty")
+			}
 			if !containsOnly(str, ALPHAS+NUMBERS) {
 				return nil, fmt.Errorf("Invalid character(s) found in build meta data %q", str)
 			}
@@ -206,10 +274,16 @@ type PRVersion struct {
 	IsNum      bool
 }
 
+// Creates a new valid prerelease version
 func NewPRVersion(s string) (*PRVersion, error) {
+	if len(s) == 0 {
+		return nil, errors.New("Prerelease is empty")
+	}
 	v := &PRVersion{}
 	if containsOnly(s, NUMBERS) {
 		num, err := strconv.ParseUint(s, 10, 64)
+
+		// Might never be hit, but just in case
 		if err != nil {
 			return nil, err
 		}
@@ -224,10 +298,15 @@ func NewPRVersion(s string) (*PRVersion, error) {
 	return v, nil
 }
 
+// Is pre release version numeric?
 func (v *PRVersion) IsNumeric() bool {
 	return v.IsNum
 }
 
+// Compares PreRelease Versions v to o:
+// -1 == v is less than o
+// 0 == v is equal to o
+// 1 == v is greater than o
 func (v *PRVersion) Compare(o *PRVersion) int {
 	if v.IsNum && !o.IsNum {
 		return -1
@@ -252,15 +331,13 @@ func (v *PRVersion) Compare(o *PRVersion) int {
 	}
 }
 
+// PreRelease version to string
 func (v *PRVersion) String() string {
 	if v.IsNum {
 		return strconv.FormatUint(v.VersionNum, 10)
 	}
 	return v.VersionStr
 }
-
-const NUMBERS = "0123456789"
-const ALPHAS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-"
 
 func containsOnly(s string, set string) bool {
 	return strings.IndexFunc(s, func(r rune) bool {

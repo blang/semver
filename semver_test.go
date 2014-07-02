@@ -6,6 +6,14 @@ import (
 	"testing"
 )
 
+func prstr(s string) *PRVersion {
+	return &PRVersion{s, 0, false}
+}
+
+func prnum(i uint64) *PRVersion {
+	return &PRVersion{"", i, true}
+}
+
 type formatTest struct {
 	v      Version
 	result string
@@ -24,14 +32,6 @@ var formatTests = []formatTest{
 	{Version{1, 2, 3, []*PRVersion{prstr("alpha"), prstr("b-eta")}, nil}, "1.2.3-alpha.b-eta"},
 }
 
-func prstr(s string) *PRVersion {
-	return &PRVersion{s, 0, false}
-}
-
-func prnum(i uint64) *PRVersion {
-	return &PRVersion{"", i, true}
-}
-
 func TestStringer(t *testing.T) {
 	for _, test := range formatTests {
 		if res := test.v.String(); res != test.result {
@@ -46,6 +46,16 @@ func TestParse(t *testing.T) {
 			t.Errorf("Error parsing %q: %q", test.result, err)
 		} else if comp := v.Compare(&test.v); comp != 0 {
 			t.Errorf("Parsing, expected %q but got %q, comp: %d ", test.v, v, comp)
+		} else if err := v.Validate(); err != nil {
+			t.Errorf("Error validating parsed version %q: %q", test.v, err)
+		}
+	}
+}
+
+func TestValidate(t *testing.T) {
+	for _, test := range formatTests {
+		if err := test.v.Validate(); err != nil {
+			t.Errorf("Error validating %q: %q", test.v, err)
 		}
 	}
 }
@@ -94,5 +104,99 @@ func TestCompare(t *testing.T) {
 		if res := test.v2.Compare(&test.v1); res != -test.result {
 			t.Errorf("Comparing %q : %q, expected %d but got %d", test.v2, test.v1, -test.result, res)
 		}
+	}
+}
+
+type wrongformatTest struct {
+	v   *Version
+	str string
+}
+
+var wrongformatTests = []wrongformatTest{
+	{nil, ""},
+	{nil, "."},
+	{nil, "1."},
+	{nil, ".1"},
+	{nil, "a.b.c"},
+	{nil, "1.a.b"},
+	{nil, "1.1.a"},
+	{nil, "1.a.1"},
+	{nil, "a.1.1"},
+	{nil, ".."},
+	{nil, "1.."},
+	{nil, "1.1."},
+	{nil, "1..1"},
+	{nil, "1.1.+123"},
+	{nil, "1.1.-beta"},
+	{nil, "-1.1.1"},
+	{nil, "1.-1.1"},
+	{nil, "1.1.-1"},
+	{&Version{0, 0, 0, []*PRVersion{prstr("!")}, nil}, "0.0.0-!"},
+	{&Version{0, 0, 0, nil, []string{"!"}}, "0.0.0+!"},
+	// empty prversion
+	{&Version{0, 0, 0, []*PRVersion{prstr(""), prstr("alpha")}, nil}, "0.0.0-.alpha"},
+	// empty build meta data
+	{&Version{0, 0, 0, []*PRVersion{prstr("alpha")}, []string{""}}, "0.0.0-alpha+"},
+	{&Version{0, 0, 0, []*PRVersion{prstr("alpha")}, []string{"test", ""}}, "0.0.0-alpha+test."},
+}
+
+func TestWrongFormat(t *testing.T) {
+	for _, test := range wrongformatTests {
+
+		if res, err := Parse(test.str); err == nil {
+			t.Errorf("Parsing wrong format version %q, expected error but got %q", test.str, res)
+		}
+
+		if test.v != nil {
+			if err := test.v.Validate(); err == nil {
+				t.Errorf("Validating wrong format version %q (%q), expected error", test.v, test.str)
+			}
+		}
+	}
+}
+
+func TestCompareHelper(t *testing.T) {
+	v := &Version{1, 0, 0, []*PRVersion{prstr("alpha")}, nil}
+	v1 := &Version{1, 0, 0, nil, nil}
+	if !v.GTE(v) {
+		t.Errorf("%q should be greater than or equal to %q", v, v)
+	}
+	if !v.LTE(v) {
+		t.Errorf("%q should be greater than or equal to %q", v, v)
+	}
+	if !v.LT(v1) {
+		t.Errorf("%q should be less than %q", v, v1)
+	}
+	if !v.LTE(v1) {
+		t.Errorf("%q should be less than or equal %q", v, v1)
+	}
+	if !v1.GT(v) {
+		t.Errorf("%q should be less than %q", v1, v)
+	}
+	if !v1.GTE(v) {
+		t.Errorf("%q should be less than or equal %q", v1, v)
+	}
+}
+
+func TestPreReleaseVersions(t *testing.T) {
+	p1, err := NewPRVersion("123")
+	if !p1.IsNumeric() {
+		t.Errorf("Expected numeric prversion, got %q", p1)
+	}
+	if p1.VersionNum != 123 {
+		t.Error("Wrong prversion number")
+	}
+	if err != nil {
+		t.Errorf("Not expected error %q", err)
+	}
+	p2, err := NewPRVersion("alpha")
+	if p2.IsNumeric() {
+		t.Errorf("Expected non-numeric prversion, got %q", p2)
+	}
+	if p2.VersionStr != "alpha" {
+		t.Error("Wrong prversion string")
+	}
+	if err != nil {
+		t.Errorf("Not expected error %q", err)
 	}
 }
