@@ -1,4 +1,4 @@
-semver for golang
+semver for golang [![Build Status](https://drone.io/github.com/blang/semver/status.png)](https://drone.io/github.com/blang/semver/latest)
 ======
 
 semver is a Semantic Versioning library written in golang. It fully covers spec version `2.0.0`.
