@@ -9,11 +9,11 @@ import (
 
 const (
 	numbers  string = "0123456789"
-	alphas   string = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-"
-	alphanum string = alphas + numbers
-	DOT      string = "."
-	HYPHEN   string = "-"
-	PLUS     string = "+"
+	alphas          = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-"
+	alphanum        = alphas + numbers
+	dot             = "."
+	hyphen          = "-"
+	plus            = "+"
 )
 
 // Latest fully supported spec version
@@ -35,22 +35,22 @@ type Version struct {
 func (v *Version) String() string {
 	versionArray := []string{
 		strconv.FormatUint(v.Major, 10),
-		DOT,
+		dot,
 		strconv.FormatUint(v.Minor, 10),
-		DOT,
+		dot,
 		strconv.FormatUint(v.Patch, 10),
 	}
 	if len(v.Pre) > 0 {
-		versionArray = append(versionArray, HYPHEN)
+		versionArray = append(versionArray, hyphen)
 		for i, pre := range v.Pre {
 			if i > 0 {
-				versionArray = append(versionArray, DOT)
+				versionArray = append(versionArray, dot)
 			}
 			versionArray = append(versionArray, pre.String())
 		}
 	}
 	if len(v.Build) > 0 {
-		versionArray = append(versionArray, PLUS, strings.Join(v.Build, DOT))
+		versionArray = append(versionArray, plus, strings.Join(v.Build, dot))
 	}
 	return strings.Join(versionArray, "")
 }
