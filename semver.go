@@ -1,16 +1,20 @@
 package semver
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 	"strconv"
 	"strings"
 )
 
-const numbers = "0123456789"
-const alphas = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-"
-const alphanum = alphas + numbers
+const (
+	numbers  string = "0123456789"
+	alphas   string = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-"
+	alphanum string = alphas + numbers
+	DOT      string = "."
+	HYPHEN   string = "-"
+	PLUS     string = "+"
+)
 
 // Latest fully supported spec version
 var SPEC_VERSION = Version{
@@ -29,34 +33,26 @@ type Version struct {
 
 // Version to string
 func (v *Version) String() string {
-	var buf bytes.Buffer
-	var DOT = []byte(".")
-	var HYPHEN = []byte("-")
-	var PLUS = []byte("+")
-	buf.WriteString(strconv.FormatUint(v.Major, 10))
-	buf.Write(DOT)
-	buf.WriteString(strconv.FormatUint(v.Minor, 10))
-	buf.Write(DOT)
-	buf.WriteString(strconv.FormatUint(v.Patch, 10))
+	versionArray := []string{
+		strconv.FormatUint(v.Major, 10),
+		DOT,
+		strconv.FormatUint(v.Minor, 10),
+		DOT,
+		strconv.FormatUint(v.Patch, 10),
+	}
 	if len(v.Pre) > 0 {
-		buf.Write(HYPHEN)
+		versionArray = append(versionArray, HYPHEN)
 		for i, pre := range v.Pre {
 			if i > 0 {
-				buf.Write(DOT)
+				versionArray = append(versionArray, DOT)
 			}
-			buf.WriteString(pre.String())
+			versionArray = append(versionArray, pre.String())
 		}
 	}
 	if len(v.Build) > 0 {
-		buf.Write(PLUS)
-		for i, build := range v.Build {
-			if i > 0 {
-				buf.Write(DOT)
-			}
-			buf.WriteString(build)
-		}
+		versionArray = append(versionArray, PLUS, strings.Join(v.Build, DOT))
 	}
-	return buf.String()
+	return strings.Join(versionArray, "")
 }
 
 // Checks if v is greater than o.
