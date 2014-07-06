@@ -360,11 +360,8 @@ func containsOnly(s string, set string) bool {
 }
 
 func hasLeadingZeroes(s string) bool {
-	if len(s) <= 1 {
-		return false
-	}
-	if s[0] == '0' {
-		return true
+	if len(s) > 1 {
+		return strings.HasPrefix(s, "0")
 	}
 	return false
 }
