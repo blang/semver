@@ -360,10 +360,7 @@ func containsOnly(s string, set string) bool {
 }
 
 func hasLeadingZeroes(s string) bool {
-	if len(s) > 1 {
-		return strings.HasPrefix(s, "0")
-	}
-	return false
+	return len(s) > 1 && s[0] == '0'
 }
 
 // Creates a new valid build version
