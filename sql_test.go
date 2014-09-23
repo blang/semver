@@ -7,14 +7,15 @@ import (
 type scanTest struct {
 	val         interface{}
 	shouldError bool
+	expected    string
 }
 
 var scanTests = []scanTest{
-	scanTest{"1.2.3", false},
-	scanTest{[]byte("1.2.3"), false},
-	scanTest{7, true},
-	scanTest{7e4, true},
-	scanTest{true, true},
+	scanTest{"1.2.3", false, "1.2.3"},
+	scanTest{[]byte("1.2.3"), false, "1.2.3"},
+	scanTest{7, true, ""},
+	scanTest{7e4, true, ""},
+	scanTest{true, true, ""},
 }
 
 func TestScanString(t *testing.T) {
@@ -28,6 +29,9 @@ func TestScanString(t *testing.T) {
 		} else {
 			if err != nil {
 				t.Fatalf("Scan returned an unexpected error: %s (%T) on %v (%T)", tc.val, tc.val, tc.val, tc.val)
+			}
+			if val, _ := s.Value(); val != tc.expected {
+				t.Errorf("Wrong Value returned, expected %q, got %q", tc.expected, val)
 			}
 		}
 	}
