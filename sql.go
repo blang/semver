@@ -17,8 +17,11 @@ func (v *Version) Scan(src interface{}) (err error) {
 		return fmt.Errorf("Version.Scan: cannot convert %T to string.", src)
 	}
 
-	v, err = Parse(strVal)
-
+	tmpv, err := Parse(strVal)
+	if err != nil {
+		return
+	}
+	*v = *tmpv
 	return
 }
 
