@@ -37,6 +37,7 @@ Features
 - Comparator-like comparisons
 - Compare Helper Methods
 - InPlace manipulation
+- database/sql compatible (sql.Scanner/Valuer)
 
 
 Example
