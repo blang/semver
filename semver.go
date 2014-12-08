@@ -32,7 +32,7 @@ type Version struct {
 }
 
 // Version to string
-func (v *Version) String() string {
+func (v Version) String() string {
 	versionArray := []string{
 		strconv.FormatUint(v.Major, 10),
 		dot,
@@ -56,22 +56,22 @@ func (v *Version) String() string {
 }
 
 // Checks if v is greater than o.
-func (v *Version) GT(o *Version) bool {
+func (v Version) GT(o *Version) bool {
 	return (v.Compare(o) == 1)
 }
 
 // Checks if v is greater than or equal to o.
-func (v *Version) GTE(o *Version) bool {
+func (v Version) GTE(o *Version) bool {
 	return (v.Compare(o) >= 0)
 }
 
 // Checks if v is less than o.
-func (v *Version) LT(o *Version) bool {
+func (v Version) LT(o *Version) bool {
 	return (v.Compare(o) == -1)
 }
 
 // Checks if v is less than or equal to o.
-func (v *Version) LTE(o *Version) bool {
+func (v Version) LTE(o *Version) bool {
 	return (v.Compare(o) <= 0)
 }
 
@@ -79,7 +79,7 @@ func (v *Version) LTE(o *Version) bool {
 // -1 == v is less than o
 // 0 == v is equal to o
 // 1 == v is greater than o
-func (v *Version) Compare(o *Version) int {
+func (v Version) Compare(o *Version) int {
 	if v.Major != o.Major {
 		if v.Major > o.Major {
 			return 1
@@ -135,7 +135,7 @@ func (v *Version) Compare(o *Version) int {
 }
 
 // Validates v and returns error in case
-func (v *Version) Validate() error {
+func (v Version) Validate() error {
 	// Major, Minor, Patch already validated using uint64
 
 	if len(v.Pre) > 0 {
@@ -313,7 +313,7 @@ func NewPRVersion(s string) (*PRVersion, error) {
 }
 
 // Is pre release version numeric?
-func (v *PRVersion) IsNumeric() bool {
+func (v PRVersion) IsNumeric() bool {
 	return v.IsNum
 }
 
@@ -321,7 +321,7 @@ func (v *PRVersion) IsNumeric() bool {
 // -1 == v is less than o
 // 0 == v is equal to o
 // 1 == v is greater than o
-func (v *PRVersion) Compare(o *PRVersion) int {
+func (v PRVersion) Compare(o *PRVersion) int {
 	if v.IsNum && !o.IsNum {
 		return -1
 	} else if !v.IsNum && o.IsNum {
@@ -346,7 +346,7 @@ func (v *PRVersion) Compare(o *PRVersion) int {
 }
 
 // PreRelease version to string
-func (v *PRVersion) String() string {
+func (v PRVersion) String() string {
 	if v.IsNum {
 		return strconv.FormatUint(v.VersionNum, 10)
 	}
