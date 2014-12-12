@@ -169,6 +169,15 @@ func TestWrongFormat(t *testing.T) {
 func TestCompareHelper(t *testing.T) {
 	v := Version{1, 0, 0, []PRVersion{prstr("alpha")}, nil}
 	v1 := Version{1, 0, 0, nil, nil}
+	if !v.EQ(v) {
+		t.Errorf("%q should be equal to %q", v, v)
+	}
+	if !v.Equals(v) {
+		t.Errorf("%q should be equal to %q", v, v)
+	}
+	if !v1.NE(v) {
+		t.Errorf("%q should not be equal to %q", v, v)
+	}
 	if !v.GTE(v) {
 		t.Errorf("%q should be greater than or equal to %q", v, v)
 	}
@@ -181,10 +190,16 @@ func TestCompareHelper(t *testing.T) {
 	if !v.LTE(v1) {
 		t.Errorf("%q should be less than or equal %q", v, v1)
 	}
+	if !v.LE(v1) {
+		t.Errorf("%q should be less than or equal %q", v, v1)
+	}
 	if !v1.GT(v) {
 		t.Errorf("%q should be less than %q", v1, v)
 	}
 	if !v1.GTE(v) {
+		t.Errorf("%q should be less than or equal %q", v1, v)
+	}
+	if !v1.GE(v) {
 		t.Errorf("%q should be less than or equal %q", v1, v)
 	}
 }

@@ -55,6 +55,21 @@ func (v Version) String() string {
 	return strings.Join(versionArray, "")
 }
 
+// Checks if v is equal to o.
+func (v Version) Equals(o Version) bool {
+	return (v.Compare(o) == 0)
+}
+
+// Checks if v is equal to o.
+func (v Version) EQ(o Version) bool {
+	return (v.Compare(o) == 0)
+}
+
+// Checks if v is not equal to o.
+func (v Version) NE(o Version) bool {
+	return (v.Compare(o) != 0)
+}
+
 // Checks if v is greater than o.
 func (v Version) GT(o Version) bool {
 	return (v.Compare(o) == 1)
@@ -65,6 +80,11 @@ func (v Version) GTE(o Version) bool {
 	return (v.Compare(o) >= 0)
 }
 
+// Checks if v is greater than or equal to o.
+func (v Version) GE(o Version) bool {
+	return (v.Compare(o) >= 0)
+}
+
 // Checks if v is less than o.
 func (v Version) LT(o Version) bool {
 	return (v.Compare(o) == -1)
@@ -72,6 +92,11 @@ func (v Version) LT(o Version) bool {
 
 // Checks if v is less than or equal to o.
 func (v Version) LTE(o Version) bool {
+	return (v.Compare(o) <= 0)
+}
+
+// Checks if v is less than or equal to o.
+func (v Version) LE(o Version) bool {
 	return (v.Compare(o) <= 0)
 }
 
