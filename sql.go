@@ -21,7 +21,7 @@ func (v *Version) Scan(src interface{}) (err error) {
 	if err != nil {
 		return
 	}
-	*v = *tmpv
+	*v = tmpv
 	return
 }
 
