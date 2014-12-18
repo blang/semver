@@ -176,13 +176,13 @@ func TestCompareHelper(t *testing.T) {
 		t.Errorf("%q should be equal to %q", v, v)
 	}
 	if !v1.NE(v) {
-		t.Errorf("%q should not be equal to %q", v, v)
+		t.Errorf("%q should not be equal to %q", v1, v)
 	}
 	if !v.GTE(v) {
 		t.Errorf("%q should be greater than or equal to %q", v, v)
 	}
 	if !v.LTE(v) {
-		t.Errorf("%q should be greater than or equal to %q", v, v)
+		t.Errorf("%q should be less than or equal to %q", v, v)
 	}
 	if !v.LT(v1) {
 		t.Errorf("%q should be less than %q", v, v1)
@@ -194,13 +194,13 @@ func TestCompareHelper(t *testing.T) {
 		t.Errorf("%q should be less than or equal %q", v, v1)
 	}
 	if !v1.GT(v) {
-		t.Errorf("%q should be less than %q", v1, v)
+		t.Errorf("%q should be greater than %q", v1, v)
 	}
 	if !v1.GTE(v) {
-		t.Errorf("%q should be less than or equal %q", v1, v)
+		t.Errorf("%q should be greater than or equal %q", v1, v)
 	}
 	if !v1.GE(v) {
-		t.Errorf("%q should be less than or equal %q", v1, v)
+		t.Errorf("%q should be greater than or equal %q", v1, v)
 	}
 }
 
