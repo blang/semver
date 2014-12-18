@@ -231,52 +231,39 @@ func Parse(s string) (Version, error) {
 		return Version{}, err
 	}
 
-	preIndex := strings.Index(parts[2], "-")
-	buildIndex := strings.Index(parts[2], "+")
-
-	// Determine last index of patch version (first of pre or build versions)
-	var subVersionIndex int
-	if preIndex != -1 && buildIndex == -1 {
-		subVersionIndex = preIndex
-	} else if preIndex == -1 && buildIndex != -1 {
-		subVersionIndex = buildIndex
-	} else if preIndex == -1 && buildIndex == -1 {
-		subVersionIndex = len(parts[2])
-	} else {
-		// if there is no actual prversion but a hyphen inside the build meta data
-		if buildIndex < preIndex {
-			subVersionIndex = buildIndex
-			preIndex = -1 // Build meta data before preIndex found implicates there are no prerelease versions
-		} else {
-			subVersionIndex = preIndex
-		}
-	}
-
-	if !containsOnly(parts[2][:subVersionIndex], numbers) {
-		return Version{}, fmt.Errorf("Invalid character(s) found in patch number %q", parts[2][:subVersionIndex])
-	}
-	if hasLeadingZeroes(parts[2][:subVersionIndex]) {
-		return Version{}, fmt.Errorf("Patch number must not contain leading zeroes %q", parts[2][:subVersionIndex])
-	}
-	patch, err := strconv.ParseUint(parts[2][:subVersionIndex], 10, 64)
-	if err != nil {
-		return Version{}, err
-	}
 	v := Version{}
 	v.Major = major
 	v.Minor = minor
+
+	var build, prerelease []string
+	patchStr := parts[2]
+
+	if buildIndex := strings.IndexRune(patchStr, '+'); buildIndex != -1 {
+		build = strings.Split(patchStr[buildIndex+1:], ".")
+		patchStr = patchStr[:buildIndex]
+	}
+
+	if preIndex := strings.IndexRune(patchStr, '-'); preIndex != -1 {
+		prerelease = strings.Split(patchStr[preIndex+1:], ".")
+		patchStr = patchStr[:preIndex]
+	}
+
+	if !containsOnly(patchStr, numbers) {
+		return Version{}, fmt.Errorf("Invalid character(s) found in patch number %q", patchStr)
+	}
+	if hasLeadingZeroes(patchStr) {
+		return Version{}, fmt.Errorf("Patch number must not contain leading zeroes %q", patchStr)
+	}
+	patch, err := strconv.ParseUint(patchStr, 10, 64)
+	if err != nil {
+		return Version{}, err
+	}
+
 	v.Patch = patch
 
 	// There are PreRelease versions
-	if preIndex != -1 {
-		var preRels string
-		if buildIndex != -1 {
-			preRels = parts[2][subVersionIndex+1 : buildIndex]
-		} else {
-			preRels = parts[2][subVersionIndex+1:]
-		}
-		prparts := strings.Split(preRels, ".")
-		for _, prstr := range prparts {
+	if len(prerelease) > 0 {
+		for _, prstr := range prerelease {
 			parsedPR, err := NewPRVersion(prstr)
 			if err != nil {
 				return Version{}, err
@@ -286,10 +273,8 @@ func Parse(s string) (Version, error) {
 	}
 
 	// There is build meta data
-	if buildIndex != -1 {
-		buildStr := parts[2][buildIndex+1:]
-		buildParts := strings.Split(buildStr, ".")
-		for _, str := range buildParts {
+	if len(build) > 0 {
+		for _, str := range build {
 			if len(str) == 0 {
 				return Version{}, errors.New("Build meta data is empty")
 			}
