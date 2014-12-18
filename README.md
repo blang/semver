@@ -8,6 +8,7 @@ Usage
 ```bash
 $ go get github.com/blang/semver
 ```
+Note: Always vendor your dependencies or fix on a specific version tag.
 
 ```go
 import github.com/blang/semver
@@ -28,6 +29,8 @@ Why should I use this lib?
 - Readable parsing/validation errors
 - Fast (See [Benchmarks](#benchmarks))
 - Only Stdlib
+- Uses values instead of pointers
+- Many features, see below
 
 
 Features
@@ -37,6 +40,7 @@ Features
 - Comparator-like comparisons
 - Compare Helper Methods
 - InPlace manipulation
+- Sortable (implements sort.Interface)
 - database/sql compatible (sql.Scanner/Valuer)
 
 
@@ -101,15 +105,16 @@ if err != nil {
 Benchmarks
 -----
 
-    BenchmarkParseSimple        5000000           442    ns/op
-    BenchmarkParseComplex       1000000          2441    ns/op
-    BenchmarkParseAverage       1000000          1497    ns/op
-    BenchmarkValidateSimple   500000000             4.83 ns/op
-    BenchmarkValidateComplex    1000000          1236    ns/op
-    BenchmarkValidateAverage    5000000           580    ns/op
-    BenchmarkCompareSimple    500000000             5.43 ns/op
-    BenchmarkCompareComplex   100000000            26.3  ns/op
-    BenchmarkCompareAverage   100000000            29.6  ns/op
+    BenchmarkParseSimple         5000000      328    ns/op    49 B/op   1 allocs/op
+    BenchmarkParseComplex        1000000     2105    ns/op   263 B/op   7 allocs/op
+    BenchmarkParseAverage        1000000     1301    ns/op   168 B/op   4 allocs/op
+    BenchmarkValidateSimple    500000000        7.92 ns/op     0 B/op   0 allocs/op
+    BenchmarkValidateComplex     2000000      923    ns/op     0 B/op   0 allocs/op
+    BenchmarkValidateAverage     5000000      452    ns/op     0 B/op   0 allocs/op
+    BenchmarkCompareSimple     100000000       11.2  ns/op     0 B/op   0 allocs/op
+    BenchmarkCompareComplex     50000000       40.9  ns/op     0 B/op   0 allocs/op
+    BenchmarkCompareAverage     50000000       43.8  ns/op     0 B/op   0 allocs/op
+    BenchmarkSort                5000000      436    ns/op   259 B/op   2 allocs/op
 
 See benchmark cases at [semver_test.go](semver_test.go)
 
