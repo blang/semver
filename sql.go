@@ -7,21 +7,20 @@ import (
 
 // Scan implements the database/sql.Scanner interface.
 func (v *Version) Scan(src interface{}) (err error) {
-	var strVal string
-	switch src.(type) {
+	var str string
+	switch src := src.(type) {
 	case string:
-		strVal = src.(string)
+		str = src
 	case []byte:
-		strVal = string(src.([]byte))
+		str = string(src)
 	default:
 		return fmt.Errorf("Version.Scan: cannot convert %T to string.", src)
 	}
 
-	tmpv, err := Parse(strVal)
-	if err != nil {
-		return
+	if t, err := Parse(str); err == nil {
+		*v = t
 	}
-	*v = tmpv
+
 	return
 }
 
