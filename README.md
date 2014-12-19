@@ -108,6 +108,9 @@ Benchmarks
     BenchmarkParseSimple         5000000      328    ns/op    49 B/op   1 allocs/op
     BenchmarkParseComplex        1000000     2105    ns/op   263 B/op   7 allocs/op
     BenchmarkParseAverage        1000000     1301    ns/op   168 B/op   4 allocs/op
+    BenchmarkStringSimple       10000000      214    ns/op    16 B/op   2 allocs/op
+    BenchmarkStringComplex       3000000      583    ns/op    88 B/op   4 allocs/op
+    BenchmarkStringAverage       3000000      461    ns/op    56 B/op   3 allocs/op
     BenchmarkValidateSimple    500000000        7.92 ns/op     0 B/op   0 allocs/op
     BenchmarkValidateComplex     2000000      923    ns/op     0 B/op   0 allocs/op
     BenchmarkValidateAverage     5000000      452    ns/op     0 B/op   0 allocs/op
