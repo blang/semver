@@ -33,26 +33,34 @@ type Version struct {
 
 // Version to string
 func (v Version) String() string {
-	versionArray := []string{
-		strconv.FormatUint(v.Major, 10),
-		dot,
-		strconv.FormatUint(v.Minor, 10),
-		dot,
-		strconv.FormatUint(v.Patch, 10),
-	}
+	b := make([]byte, 0)
+	b = strconv.AppendUint(b, v.Major, 10)
+	b = append(b, '.')
+	b = strconv.AppendUint(b, v.Minor, 10)
+	b = append(b, '.')
+	b = strconv.AppendUint(b, v.Patch, 10)
+
 	if len(v.Pre) > 0 {
-		versionArray = append(versionArray, hyphen)
-		for i, pre := range v.Pre {
-			if i > 0 {
-				versionArray = append(versionArray, dot)
-			}
-			versionArray = append(versionArray, pre.String())
+		b = append(b, '-')
+		b = append(b, v.Pre[0].String()...)
+
+		for _, pre := range v.Pre[1:] {
+			b = append(b, '.')
+			b = append(b, pre.String()...)
 		}
 	}
+
 	if len(v.Build) > 0 {
-		versionArray = append(versionArray, plus, strings.Join(v.Build, dot))
+		b = append(b, '+')
+		b = append(b, v.Build[0]...)
+
+		for _, build := range v.Build[1:] {
+			b = append(b, '.')
+			b = append(b, build...)
+		}
 	}
-	return strings.Join(versionArray, "")
+
+	return string(b)
 }
 
 // Checks if v is equal to o.
