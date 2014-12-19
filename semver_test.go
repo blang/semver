@@ -291,6 +291,35 @@ func BenchmarkParseAverage(b *testing.B) {
 	}
 }
 
+func BenchmarkStringSimple(b *testing.B) {
+	const VERSION = "0.0.1"
+	v, _ := New(VERSION)
+	b.ReportAllocs()
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		v.String()
+	}
+}
+
+func BenchmarkStringComplex(b *testing.B) {
+	const VERSION = "0.0.1-alpha.preview+123.456"
+	v, _ := New(VERSION)
+	b.ReportAllocs()
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		v.String()
+	}
+}
+
+func BenchmarkStringAverage(b *testing.B) {
+	l := len(formatTests)
+	b.ReportAllocs()
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		formatTests[n%l].v.String()
+	}
+}
+
 func BenchmarkValidateSimple(b *testing.B) {
 	const VERSION = "0.0.1"
 	v, _ := New(VERSION)
