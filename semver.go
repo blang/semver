@@ -11,9 +11,6 @@ const (
 	numbers  string = "0123456789"
 	alphas          = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-"
 	alphanum        = alphas + numbers
-	dot             = "."
-	hyphen          = "-"
-	plus            = "+"
 )
 
 // Latest fully supported spec version
@@ -171,27 +168,23 @@ func (v Version) Compare(o Version) int {
 func (v Version) Validate() error {
 	// Major, Minor, Patch already validated using uint64
 
-	if len(v.Pre) > 0 {
-		for _, pre := range v.Pre {
-			if !pre.IsNum { //Numeric prerelease versions already uint64
-				if len(pre.VersionStr) == 0 {
-					return fmt.Errorf("Prerelease can not be empty %q", pre.VersionStr)
-				}
-				if !containsOnly(pre.VersionStr, alphanum) {
-					return fmt.Errorf("Invalid character(s) found in prerelease %q", pre.VersionStr)
-				}
+	for _, pre := range v.Pre {
+		if !pre.IsNum { //Numeric prerelease versions already uint64
+			if len(pre.VersionStr) == 0 {
+				return fmt.Errorf("Prerelease can not be empty %q", pre.VersionStr)
+			}
+			if !containsOnly(pre.VersionStr, alphanum) {
+				return fmt.Errorf("Invalid character(s) found in prerelease %q", pre.VersionStr)
 			}
 		}
 	}
 
-	if len(v.Build) > 0 {
-		for _, build := range v.Build {
-			if len(build) == 0 {
-				return fmt.Errorf("Build meta data can not be empty %q", build)
-			}
-			if !containsOnly(build, alphanum) {
-				return fmt.Errorf("Invalid character(s) found in build meta data %q", build)
-			}
+	for _, build := range v.Build {
+		if len(build) == 0 {
+			return fmt.Errorf("Build meta data can not be empty %q", build)
+		}
+		if !containsOnly(build, alphanum) {
+			return fmt.Errorf("Invalid character(s) found in build meta data %q", build)
 		}
 	}
 
@@ -269,28 +262,24 @@ func Parse(s string) (Version, error) {
 
 	v.Patch = patch
 
-	// There are PreRelease versions
-	if len(prerelease) > 0 {
-		for _, prstr := range prerelease {
-			parsedPR, err := NewPRVersion(prstr)
-			if err != nil {
-				return Version{}, err
-			}
-			v.Pre = append(v.Pre, parsedPR)
+	// Prerelease
+	for _, prstr := range prerelease {
+		parsedPR, err := NewPRVersion(prstr)
+		if err != nil {
+			return Version{}, err
 		}
+		v.Pre = append(v.Pre, parsedPR)
 	}
 
-	// There is build meta data
-	if len(build) > 0 {
-		for _, str := range build {
-			if len(str) == 0 {
-				return Version{}, errors.New("Build meta data is empty")
-			}
-			if !containsOnly(str, alphanum) {
-				return Version{}, fmt.Errorf("Invalid character(s) found in build meta data %q", str)
-			}
-			v.Build = append(v.Build, str)
+	// Build meta data
+	for _, str := range build {
+		if len(str) == 0 {
+			return Version{}, errors.New("Build meta data is empty")
 		}
+		if !containsOnly(str, alphanum) {
+			return Version{}, fmt.Errorf("Invalid character(s) found in build meta data %q", str)
+		}
+		v.Build = append(v.Build, str)
 	}
 
 	return v, nil
