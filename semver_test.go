@@ -301,6 +301,16 @@ func BenchmarkStringSimple(b *testing.B) {
 	}
 }
 
+func BenchmarkStringLarger(b *testing.B) {
+	const VERSION = "11.15.2012"
+	v, _ := New(VERSION)
+	b.ReportAllocs()
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		v.String()
+	}
+}
+
 func BenchmarkStringComplex(b *testing.B) {
 	const VERSION = "0.0.1-alpha.preview+123.456"
 	v, _ := New(VERSION)

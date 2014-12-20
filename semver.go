@@ -30,7 +30,7 @@ type Version struct {
 
 // Version to string
 func (v Version) String() string {
-	b := make([]byte, 0)
+	b := make([]byte, 0, 5)
 	b = strconv.AppendUint(b, v.Major, 10)
 	b = append(b, '.')
 	b = strconv.AppendUint(b, v.Minor, 10)
