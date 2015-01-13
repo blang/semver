@@ -42,6 +42,7 @@ Features
 - InPlace manipulation
 - Sortable (implements sort.Interface)
 - database/sql compatible (sql.Scanner/Valuer)
+- encoding/json compatible (json.Marshaler/Unmarshaler)
 
 
 Example
