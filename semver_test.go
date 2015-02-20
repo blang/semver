@@ -50,6 +50,19 @@ func TestParse(t *testing.T) {
 	}
 }
 
+func TestMustParse(t *testing.T) {
+	_ = MustParse("32.2.1-alpha")
+}
+
+func TestMustParse_panic(t *testing.T) {
+	defer func() {
+		if recover() == nil {
+			t.Errorf("Should have panicked")
+		}
+	}()
+	_ = MustParse("invalid version")
+}
+
 func TestValidate(t *testing.T) {
 	for _, test := range formatTests {
 		if err := test.v.Validate(); err != nil {
