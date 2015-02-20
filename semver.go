@@ -289,7 +289,7 @@ func Parse(s string) (Version, error) {
 func MustParse(s string) Version {
 	v, err := Parse(s)
 	if err != nil {
-		panic(`semver: Parse(` + quote(s) + `): ` + err.Error())
+		panic(`semver: Parse(` + s + `): ` + err.Error())
 	}
 	return v
 }
