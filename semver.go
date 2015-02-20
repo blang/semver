@@ -285,6 +285,15 @@ func Parse(s string) (Version, error) {
 	return v, nil
 }
 
+// MustParse is like Parse but panics if the version cannot be parsed.
+func MustParse(s string) Version {
+	v, err := Parse(s)
+	if err != nil {
+		panic(`semver: Parse(` + quote(s) + `): ` + err.Error())
+	}
+	return v
+}
+
 // PreRelease Version
 type PRVersion struct {
 	VersionStr string
