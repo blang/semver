@@ -263,6 +263,7 @@ func TestParseRange(t *testing.T) {
 			{"1.2.2", false},
 			{"1.2.3", false},
 			{"1.2.4", true},
+			{"1.2.5-beta", false},
 		}},
 		{">=1.2.3", []tv{
 			{"1.2.3", true},
@@ -304,6 +305,17 @@ func TestParseRange(t *testing.T) {
 			{"1.2.3", false},
 			{"1.2.4", true},
 		}},
+
+		// Prerelease Expression
+		{">=1.4.2-beta.2", []tv{
+			{"1.3.2", false},
+			{"1.4.3", true},
+			{"1.4.0-beta", false},
+			{"1.4.2-beta", false},
+			{"1.4.2-beta.3", true},
+			{"1.4.3-beta", false},
+		}},
+
 		// Simple Expression errors
 		{">>1.2.3", nil},
 		{"!1.2.3", nil},
