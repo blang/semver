@@ -40,11 +40,10 @@ func (vr *versionRange) rangeFunc() Range {
 		return Range(func(v Version) bool {
 			return len(v.Pre) == 0 && vr.c(v, vr.v)
 		})
-	} else {
-		return Range(func(v Version) bool {
-			return prMatch(vr.v, v) && vr.c(v, vr.v)
-		})
 	}
+	return Range(func(v Version) bool {
+		return prMatch(vr.v, v) && vr.c(v, vr.v)
+	})
 }
 
 // Range represents a range of versions.
@@ -196,8 +195,7 @@ func splitAndTrim(s string) (result []string) {
 // When checking prerelease ranges, we want to make sure we're
 // only matching against ranges with same [major, minor, patch]
 func prMatch(v, o Version) bool {
-	return len(o.Pre) == 0 || (
-		v.Major == o.Major &&
+	return len(o.Pre) == 0 || (v.Major == o.Major &&
 		v.Minor == o.Minor &&
 		v.Patch == o.Patch)
 }

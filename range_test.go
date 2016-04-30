@@ -315,6 +315,12 @@ func TestParseRange(t *testing.T) {
 			{"1.4.2-beta.3", true},
 			{"1.4.3-beta", false},
 		}},
+		{">1.2.3-beta <1.2.5", []tv{
+			{"1.2.3", true},
+			{"1.2.3-beta.2", true},
+			{"1.2.3-gamma", true},
+			{"1.2.4-beta.2", false},
+		}},
 
 		// Simple Expression errors
 		{">>1.2.3", nil},

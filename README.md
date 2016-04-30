@@ -85,6 +85,7 @@ if range(v) {
     //valid
 }
 
+If a version has a prerelease tag (for example, 1.2.3-alpha.3) then it will only be allowed to satisfy comparator sets if at least one comparator with the same [major, minor, patch] tuple also has a prerelease tag.
 ```
 
 Example
