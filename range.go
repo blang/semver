@@ -222,3 +222,12 @@ func parseComparator(s string) comparator {
 
 	return nil
 }
+
+// MustParseRange is like ParseRange but panics if the range cannot be parsed.
+func MustParseRange(s string) Range {
+	r, err := ParseRange(s)
+	if err != nil {
+		panic(`semver: ParseRange(` + s + `): ` + err.Error())
+	}
+	return r
+}

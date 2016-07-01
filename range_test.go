@@ -381,6 +381,23 @@ func TestParseRange(t *testing.T) {
 	}
 }
 
+func TestMustParseRange(t *testing.T) {
+	testCase := ">1.2.2 <1.2.4 || >=2.0.0 <3.0.0"
+	r := MustParseRange(testCase)
+	if !r(MustParse("1.2.3")) {
+		t.Errorf("Unexpected range behavior on MustParseRange")
+	}
+}
+
+func TestMustParseRange_panic(t *testing.T) {
+	defer func() {
+		if recover() == nil {
+			t.Errorf("Should have panicked")
+		}
+	}()
+	_ = MustParseRange("invalid version")
+}
+
 func BenchmarkRangeParseSimple(b *testing.B) {
 	const VERSION = ">1.0.0"
 	b.ReportAllocs()
