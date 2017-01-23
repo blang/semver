@@ -240,7 +240,6 @@ func splitComparatorVersion(s string) (string, string, error) {
 	if i == -1 {
 		return "", "", fmt.Errorf("Could not get version from string: %q", s)
 	}
-
 	return strings.TrimSpace(s[0:i]), s[i:], nil
 }
 
