@@ -202,7 +202,7 @@ func TestGetWildcardType(t *testing.T) {
 		{"x", majorWildcard},
 		{"1.x", minorWildcard},
 		{"1.2.x", patchWildcard},
-		{"foobar", noneWildcard},
+		{"fo.o.b.ar", noneWildcard},
 	}
 
 	for _, tc := range wildcardTypeTests {
@@ -237,13 +237,11 @@ func TestIncrementMajorVersion(t *testing.T) {
 	}{
 		{"1.2.3", "2.2.3"},
 		{"1.2", "2.2"},
+		{"foo.bar", ""},
 	}
 
 	for _, tc := range tests {
-		p, err := incrementMajorVersion(tc.i)
-		if err != nil {
-			t.Errorf("Invalid for case %q: Expected %q, got: %q", tc.i, tc.s, err)
-		}
+		p, _ := incrementMajorVersion(tc.i)
 		if p != tc.s {
 			t.Errorf("Invalid for case %q: Expected %q, got: %q", tc.i, tc.s, p)
 		}
@@ -257,13 +255,11 @@ func TestIncrementMinorVersion(t *testing.T) {
 	}{
 		{"1.2.3", "1.3.3"},
 		{"1.2", "1.3"},
+		{"foo.bar", ""},
 	}
 
 	for _, tc := range tests {
-		p, err := incrementMinorVersion(tc.i)
-		if err != nil {
-			t.Errorf("Invalid for case %q: Expected %q, got: %q", tc.i, tc.s, err)
-		}
+		p, _ := incrementMinorVersion(tc.i)
 		if p != tc.s {
 			t.Errorf("Invalid for case %q: Expected %q, got: %q", tc.i, tc.s, p)
 		}
@@ -275,6 +271,7 @@ func TestExpandWildcardVersion(t *testing.T) {
 		i [][]string
 		o [][]string
 	}{
+		{[][]string{[]string{"foox"}}, nil},
 		{[][]string{[]string{">=1.2.x"}}, [][]string{[]string{">=1.2.0"}}},
 		{[][]string{[]string{"<=1.2.x"}}, [][]string{[]string{"<1.3.0"}}},
 		{[][]string{[]string{">1.2.x"}}, [][]string{[]string{">=1.3.0"}}},
@@ -290,10 +287,7 @@ func TestExpandWildcardVersion(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		o, err := expandWildcardVersion(tc.i)
-		if err != nil {
-			t.Errorf("Invalid for case %q: Expected %q, got: %q", tc.i, tc.o, err)
-		}
+		o, _ := expandWildcardVersion(tc.i)
 		if !reflect.DeepEqual(tc.o, o) {
 			t.Errorf("Invalid for case %q: Expected %q, got: %q", tc.i, tc.o, o)
 		}
@@ -419,7 +413,7 @@ func TestParseRange(t *testing.T) {
 		{"1.0", nil},
 		{"string", nil},
 		{"", nil},
-
+		{"fo.ob.ar.x", nil},
 		// AND Expressions
 		{">1.2.2 <1.2.4", []tv{
 			{"1.2.2", false},
@@ -455,6 +449,18 @@ func TestParseRange(t *testing.T) {
 			{"1.2.3", false},
 			{"1.2.4", false},
 		}},
+		// Wildcard expressions
+		{">1.x", []tv{
+			{"0.1.9", false},
+			{"1.2.6", false},
+			{"1.9.0", false},
+			{"2.0.0", true},
+		}},
+		{">1.2.x", []tv{
+			{"1.1.9", false},
+			{"1.2.6", false},
+			{"1.3.0", true},
+		}},
 		// Combined Expressions
 		{">1.2.2 <1.2.4 || >=2.0.0", []tv{
 			{"1.2.2", false},
@@ -462,6 +468,13 @@ func TestParseRange(t *testing.T) {
 			{"1.2.4", false},
 			{"2.0.0", true},
 			{"2.0.1", true},
+		}},
+		{"1.x || >=2.0.x <2.2.x", []tv{
+			{"0.9.2", false},
+			{"1.2.2", true},
+			{"2.0.0", true},
+			{"2.1.8", true},
+			{"2.2.0", false},
 		}},
 		{">1.2.2 <1.2.4 || >=2.0.0 <3.0.0", []tv{
 			{"1.2.2", false},

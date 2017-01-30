@@ -24,8 +24,9 @@ func wildcardTypefromInt(i int) wildcardType {
 		return minorWildcard
 	case 3:
 		return patchWildcard
+	default:
+		return noneWildcard
 	}
-	return noneWildcard
 }
 
 type comparator func(Version, Version) bool
@@ -233,7 +234,6 @@ func splitAndTrim(s string) (result []string) {
 }
 
 // splitComparatorVersion splits the comparator from the version.
-// Spaces between the comparator and the version are not allowed.
 // Input must be free of leading or trailing spaces.
 func splitComparatorVersion(s string) (string, string, error) {
 	i := strings.IndexFunc(s, unicode.IsDigit)
@@ -280,10 +280,10 @@ func createVersionFromWildcard(vStr string) string {
 func incrementMajorVersion(vStr string) (string, error) {
 	parts := strings.Split(vStr, ".")
 	i, err := strconv.Atoi(parts[0])
-	parts[0] = strconv.Itoa(i + 1)
 	if err != nil {
 		return "", err
 	}
+	parts[0] = strconv.Itoa(i + 1)
 
 	return strings.Join(parts, "."), nil
 }
@@ -293,10 +293,10 @@ func incrementMajorVersion(vStr string) (string, error) {
 func incrementMinorVersion(vStr string) (string, error) {
 	parts := strings.Split(vStr, ".")
 	i, err := strconv.Atoi(parts[1])
-	parts[1] = strconv.Itoa(i + 1)
 	if err != nil {
 		return "", err
 	}
+	parts[1] = strconv.Itoa(i + 1)
 
 	return strings.Join(parts, "."), nil
 }
