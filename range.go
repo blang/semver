@@ -9,8 +9,8 @@ import (
 
 type wildcardType int
 
-var (
-	noneWildcard  wildcardType
+const (
+	noneWildcard  wildcardType = iota
 	majorWildcard wildcardType = 1
 	minorWildcard wildcardType = 2
 	patchWildcard wildcardType = 3
