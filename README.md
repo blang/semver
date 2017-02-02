@@ -41,6 +41,7 @@ Features
 - Compare Helper Methods
 - InPlace manipulation
 - Ranges `>=1.0.0 <2.0.0 || >=3.0.0 !3.0.1-beta.1`
+- Wildcards `>=1.x`, `<=2.5.x`
 - Sortable (implements sort.Interface)
 - database/sql compatible (sql.Scanner/Valuer)
 - encoding/json compatible (json.Marshaler/Unmarshaler)
@@ -58,6 +59,8 @@ A condition is composed of an operator and a version. The supported operators ar
 - `>=1.0.0` Greater than or equal to `1.0.0`
 - `1.0.0`, `=1.0.0`, `==1.0.0` Equal to `1.0.0`
 - `!1.0.0`, `!=1.0.0` Not equal to `1.0.0`. Excludes version `1.0.0`.
+
+Note that spaces between the operator and the version will be gracefully tolerated.
 
 A `Range` can link multiple `Ranges` separated by space:
 
