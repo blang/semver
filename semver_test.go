@@ -256,6 +256,64 @@ func TestCompareHelper(t *testing.T) {
 	}
 }
 
+const (
+	MAJOR = iota
+	MINOR
+	PATCH
+)
+
+type incrementTest struct {
+	version         Version
+	incrementType   int
+	expectingError  bool
+	expectedVersion Version
+}
+
+var incrementTests = []incrementTest{
+	{Version{1, 2, 3, nil, nil}, PATCH, false, Version{1, 2, 4, nil, nil}},
+	{Version{1, 2, 3, nil, nil}, MINOR, false, Version{1, 3, 0, nil, nil}},
+	{Version{1, 2, 3, nil, nil}, MAJOR, false, Version{2, 0, 0, nil, nil}},
+	{Version{0, 1, 2, nil, nil}, PATCH, true, Version{}},
+	{Version{0, 1, 2, nil, nil}, MINOR, true, Version{}},
+	{Version{0, 1, 2, nil, nil}, MAJOR, true, Version{}},
+}
+
+func TestIncrements(t *testing.T) {
+	for _, test := range incrementTests {
+		var originalVersion = Version{
+			test.version.Major,
+			test.version.Minor,
+			test.version.Patch,
+			test.version.Pre,
+			test.version.Build,
+		}
+		var err error
+		switch test.incrementType {
+		case PATCH:
+			err = test.version.IncrementPatch()
+		case MINOR:
+			err = test.version.IncrementMinor()
+		case MAJOR:
+			err = test.version.IncrementMajor()
+		}
+		if test.expectingError {
+			if err == nil {
+				t.Errorf("Increment version %q, expecting error, got %q", test.version, err)
+			}
+			if test.version.NE(originalVersion) {
+				t.Errorf("Increment version, expecting %q, got %q", test.expectedVersion, test.version)
+			}
+		} else {
+			if (err != nil) && !test.expectingError {
+				t.Errorf("Increment version %q, not expecting error, got %q", test.version, err)
+			}
+			if test.version.NE(test.expectedVersion) {
+				t.Errorf("Increment version, expecting %q, got %q", test.expectedVersion, test.version)
+			}
+		}
+	}
+}
+
 func TestPreReleaseVersions(t *testing.T) {
 	p1, err := NewPRVersion("123")
 	if !p1.IsNumeric() {

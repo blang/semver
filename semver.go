@@ -161,6 +161,36 @@ func (v Version) Compare(o Version) int {
 
 }
 
+// IncrementPatch increments the patch version
+func (v *Version) IncrementPatch() error {
+	if v.Major == 0 {
+		return fmt.Errorf("Patch version can not be incremented for %q", v.String())
+	}
+	v.Patch += 1
+	return nil
+}
+
+// IncrementMinor increments the minor version
+func (v *Version) IncrementMinor() error {
+	if v.Major == 0 {
+		return fmt.Errorf("Minor version can not be incremented for %q", v.String())
+	}
+	v.Minor += 1
+	v.Patch = 0
+	return nil
+}
+
+// IncrementMajor increments the major version
+func (v *Version) IncrementMajor() error {
+	if v.Major == 0 {
+		return fmt.Errorf("Major version can not be incremented for %q", v.String())
+	}
+	v.Major += 1
+	v.Minor = 0
+	v.Patch = 0
+	return nil
+}
+
 // Validate validates v and returns error in case
 func (v Version) Validate() error {
 	// Major, Minor, Patch already validated using uint64
