@@ -366,7 +366,7 @@ func BenchmarkStringSimple(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		v.String()
+		_ = v.String()
 	}
 }
 
@@ -376,7 +376,7 @@ func BenchmarkStringLarger(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		v.String()
+		_ = v.String()
 	}
 }
 
@@ -386,7 +386,7 @@ func BenchmarkStringComplex(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		v.String()
+		_ = v.String()
 	}
 }
 
@@ -395,7 +395,7 @@ func BenchmarkStringAverage(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		formatTests[n%l].v.String()
+		_ = formatTests[n%l].v.String()
 	}
 }
 
