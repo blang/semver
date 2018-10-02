@@ -17,7 +17,7 @@ install:
 - go get github.com/mattn/goveralls
 script:
 - echo "Test and track coverage" ; $HOME/gopath/bin/goveralls -package "." -service=travis-ci
-  -repotoken $COVERALLS_TOKEN
+  -repotoken=$COVERALLS_TOKEN
 - echo "Build examples" ; cd examples && go build
 - echo "Check if gofmt'd" ; diff -u <(echo -n) <(gofmt -d -s .)
 env:
