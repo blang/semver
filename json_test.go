@@ -57,4 +57,14 @@ func TestJSONUnmarshal(t *testing.T) {
 	if err := json.Unmarshal([]byte(fullVersionString), &v); err != nil {
 		t.Fatal(err)
 	}
+
+	prefixVVersionString := strconv.Quote("v3.2")
+	if err := json.Unmarshal([]byte(prefixVVersionString), &v); err != nil {
+		t.Fatal(err)
+	}
+
+	trailingWhitespaceString := strconv.Quote("  v3.2.1   ")
+	if err := json.Unmarshal([]byte(trailingWhitespaceString), &v); err != nil {
+		t.Fatal(err)
+	}
 }
