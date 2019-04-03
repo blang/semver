@@ -18,6 +18,10 @@ func (v *Version) UnmarshalJSON(data []byte) (err error) {
 	}
 
 	*v, err = Parse(versionString)
+	if err != nil {
+		*v, err = ParseTolerant(versionString)
+		return
+	}
 
 	return
 }
