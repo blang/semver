@@ -389,7 +389,7 @@ func BenchmarkParseSimple(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		Parse(VERSION)
+		_, _ = Parse(VERSION)
 	}
 }
 
@@ -398,7 +398,7 @@ func BenchmarkParseComplex(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		Parse(VERSION)
+		_, _ = Parse(VERSION)
 	}
 }
 
@@ -407,7 +407,7 @@ func BenchmarkParseAverage(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		Parse(formatTests[n%l].result)
+		_, _ = Parse(formatTests[n%l].result)
 	}
 }
 
@@ -416,7 +416,7 @@ func BenchmarkParseTolerantAverage(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		ParseTolerant(tolerantFormatTests[n%l].result)
+		_, _ = ParseTolerant(tolerantFormatTests[n%l].result)
 	}
 }
 
@@ -465,7 +465,7 @@ func BenchmarkValidateSimple(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		v.Validate()
+		_ = v.Validate()
 	}
 }
 
@@ -475,7 +475,7 @@ func BenchmarkValidateComplex(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		v.Validate()
+		_ = v.Validate()
 	}
 }
 
@@ -484,7 +484,7 @@ func BenchmarkValidateAverage(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		formatTests[n%l].v.Validate()
+		_ = formatTests[n%l].v.Validate()
 	}
 }
 
