@@ -525,7 +525,7 @@ func BenchmarkRangeParseSimple(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		ParseRange(VERSION)
+		_, _ = ParseRange(VERSION)
 	}
 }
 
@@ -534,7 +534,7 @@ func BenchmarkRangeParseAverage(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		ParseRange(VERSION)
+		_, _ = ParseRange(VERSION)
 	}
 }
 
@@ -543,7 +543,7 @@ func BenchmarkRangeParseComplex(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		ParseRange(VERSION)
+		_, _ = ParseRange(VERSION)
 	}
 }
 
