@@ -32,9 +32,12 @@ var formatTests = []formatTest{
 
 var tolerantFormatTests = []formatTest{
 	{Version{1, 2, 3, nil, nil}, "v1.2.3"},
+	{Version{1, 2, 0, []PRVersion{prstr("alpha")}, nil}, "1.2.0-alpha"},
+	{Version{1, 2, 0, nil, nil}, "1.2.00"},
 	{Version{1, 2, 3, nil, nil}, "	1.2.3 "},
 	{Version{1, 2, 3, nil, nil}, "01.02.03"},
 	{Version{0, 0, 3, nil, nil}, "00.0.03"},
+	{Version{0, 0, 3, nil, nil}, "000.0.03"},
 	{Version{1, 2, 0, nil, nil}, "1.2"},
 	{Version{1, 0, 0, nil, nil}, "1"},
 }

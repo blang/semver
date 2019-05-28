@@ -243,7 +243,11 @@ func ParseTolerant(s string) (Version, error) {
 	// Remove leading zeros.
 	for i, p := range parts {
 		if len(p) > 1 {
-			parts[i] = strings.TrimPrefix(p, "0")
+			p = strings.TrimLeft(p, "0")
+			if len(p) == 0 || !strings.ContainsAny(p[0:1], "0123456789") {
+				p = "0" + p
+			}
+			parts[i] = p
 		}
 	}
 	// Fill up shortened versions.
