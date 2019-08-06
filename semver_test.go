@@ -137,7 +137,7 @@ func TestCompare(t *testing.T) {
 		if res := test.v1.Compare(test.v2); res != test.result {
 			t.Errorf("Comparing %q : %q, expected %d but got %d", test.v1, test.v2, test.result, res)
 		}
-		//Test counterpart
+		// Test counterpart
 		if res := test.v2.Compare(test.v1); res != -test.result {
 			t.Errorf("Comparing %q : %q, expected %d but got %d", test.v2, test.v1, -test.result, res)
 		}
@@ -276,9 +276,9 @@ var incrementTests = []incrementTest{
 	{Version{1, 2, 3, nil, nil}, PATCH, false, Version{1, 2, 4, nil, nil}},
 	{Version{1, 2, 3, nil, nil}, MINOR, false, Version{1, 3, 0, nil, nil}},
 	{Version{1, 2, 3, nil, nil}, MAJOR, false, Version{2, 0, 0, nil, nil}},
-	{Version{0, 1, 2, nil, nil}, PATCH, true, Version{}},
-	{Version{0, 1, 2, nil, nil}, MINOR, true, Version{}},
-	{Version{0, 1, 2, nil, nil}, MAJOR, true, Version{}},
+	{Version{0, 1, 2, nil, nil}, PATCH, false, Version{0, 1, 3, nil, nil}},
+	{Version{0, 1, 2, nil, nil}, MINOR, false, Version{0, 2, 0, nil, nil}},
+	{Version{0, 1, 2, nil, nil}, MAJOR, false, Version{1, 0, 0, nil, nil}},
 }
 
 func TestIncrements(t *testing.T) {
@@ -300,10 +300,10 @@ func TestIncrements(t *testing.T) {
 			err = test.version.IncrementMajor()
 		}
 		if test.expectingError {
-			if err == nil {
-				t.Errorf("Increment version %q, expecting error, got %q", test.version, err)
+			if err != nil {
+				t.Errorf("Increment version, expecting %q, got error %q", test.expectedVersion, err)
 			}
-			if test.version.NE(originalVersion) {
+			if test.version.EQ(originalVersion) {
 				t.Errorf("Increment version, expecting %q, got %q", test.expectedVersion, test.version)
 			}
 		} else {
