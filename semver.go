@@ -61,6 +61,18 @@ func (v Version) String() string {
 	return string(b)
 }
 
+// FinalizeVersion discards prerelease and build number and only returns
+// major, minor and patch number.
+func (v Version) FinalizeVersion() string {
+	b := make([]byte, 0, 5)
+	b = strconv.AppendUint(b, v.Major, 10)
+	b = append(b, '.')
+	b = strconv.AppendUint(b, v.Minor, 10)
+	b = append(b, '.')
+	b = strconv.AppendUint(b, v.Patch, 10)
+	return string(b)
+}
+
 // Equals checks if v is equal to o.
 func (v Version) Equals(o Version) bool {
 	return (v.Compare(o) == 0)
@@ -447,4 +459,18 @@ func NewBuildVersion(s string) (string, error) {
 		return "", fmt.Errorf("Invalid character(s) found in build meta data %q", s)
 	}
 	return s, nil
+}
+
+// FinalizeVersion returns the major, minor and patch number only and discards
+// prerelease and build number.
+func FinalizeVersion(s string) (string, error) {
+	v, err := Parse(s)
+	if err != nil {
+		return "", err
+	}
+	v.Pre = nil
+	v.Build = nil
+
+	finalVer := fmt.Sprintf("%s", v)
+	return finalVer, nil
 }
