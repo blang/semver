@@ -210,10 +210,10 @@ func (v Version) Validate() error {
 }
 
 // New is an alias for Parse and returns a pointer, parses version string and returns a validated Version or error
-func New(s string) (vp *Version, err error) {
+func New(s string) (*Version, error) {
 	v, err := Parse(s)
-	vp = &v
-	return
+	vp := &v
+	return vp, err
 }
 
 // Make is an alias for Parse, parses version string and returns a validated Version or error
