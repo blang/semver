@@ -166,7 +166,7 @@ func (v *Version) IncrementPatch() error {
 	if v.Major == 0 {
 		return fmt.Errorf("Patch version can not be incremented for %q", v.String())
 	}
-	v.Patch += 1
+	v.Patch++
 	return nil
 }
 
@@ -175,7 +175,7 @@ func (v *Version) IncrementMinor() error {
 	if v.Major == 0 {
 		return fmt.Errorf("Minor version can not be incremented for %q", v.String())
 	}
-	v.Minor += 1
+	v.Minor++
 	v.Patch = 0
 	return nil
 }
@@ -185,7 +185,7 @@ func (v *Version) IncrementMajor() error {
 	if v.Major == 0 {
 		return fmt.Errorf("Major version can not be incremented for %q", v.String())
 	}
-	v.Major += 1
+	v.Major++
 	v.Minor = 0
 	v.Patch = 0
 	return nil
