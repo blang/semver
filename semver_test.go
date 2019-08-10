@@ -92,6 +92,28 @@ func TestValidate(t *testing.T) {
 	}
 }
 
+var finalizeVersionMethod = []formatTest{
+	{Version{1, 2, 3, nil, nil}, "1.2.3"},
+	{Version{0, 0, 1, nil, nil}, "0.0.1"},
+	{Version{0, 0, 1, []PRVersion{prstr("alpha"), prstr("preview")}, []string{"123", "456"}}, "0.0.1"},
+	{Version{1, 2, 3, []PRVersion{prstr("alpha"), prnum(1)}, []string{"123", "456"}}, "1.2.3"},
+	{Version{1, 2, 3, []PRVersion{prstr("alpha"), prnum(1)}, nil}, "1.2.3"},
+	{Version{1, 2, 3, nil, []string{"123", "456"}}, "1.2.3"},
+	// Prereleases and build metadata hyphens
+	{Version{1, 2, 3, []PRVersion{prstr("alpha"), prstr("b-eta")}, []string{"123", "b-uild"}}, "1.2.3"},
+	{Version{1, 2, 3, nil, []string{"123", "b-uild"}}, "1.2.3"},
+	{Version{1, 2, 3, []PRVersion{prstr("alpha"), prstr("b-eta")}, nil}, "1.2.3"},
+}
+
+func TestFinalizeVersionMethod(t *testing.T) {
+	for _, test := range finalizeVersionMethod {
+		out := test.v.FinalizeVersion()
+		if out != test.result {
+			t.Errorf("Finalized version error, expected %q but got %q", test.result, out)
+		}
+	}
+}
+
 type compareTest struct {
 	v1     Version
 	v2     Version
@@ -381,6 +403,38 @@ func TestMakeHelper(t *testing.T) {
 	}
 	if v.Compare(Version{1, 2, 3, nil, nil}) != 0 {
 		t.Fatal("Unexpected comparison problem")
+	}
+}
+
+type finalizeTest struct {
+	input  string
+	output string
+}
+
+var finalizeTests = []finalizeTest{
+	{"", ""},
+	{"1.2.3", "1.2.3"},
+	{"0.0.1", "0.0.1"},
+	{"0.0.1-alpha.preview+123.456", "0.0.1"},
+	{"1.2.3-alpha.1+123.456", "1.2.3"},
+	{"1.2.3-alpha.1", "1.2.3"},
+	{"1.2.3+123.456", "1.2.3"},
+	{"1.2.3-alpha.b-eta+123.b-uild", "1.2.3"},
+	{"1.2.3+123.b-uild", "1.2.3"},
+	{"1.2.3-alpha.b-eta", "1.2.3"},
+	{"1.2-alpha", ""},
+}
+
+func TestFinalizeVersion(t *testing.T) {
+	for _, test := range finalizeTests {
+		finalVer, err := FinalizeVersion(test.input)
+		if finalVer == "" {
+			if err == nil {
+				t.Errorf("Finalize Version error, expected error but got nil")
+			}
+		} else if finalVer != test.output && err != nil {
+			t.Errorf("Finalize Version error expected %q but got %q", test.output, finalVer)
+		}
 	}
 }
 
