@@ -476,6 +476,6 @@ func FinalizeVersion(s string) (string, error) {
 	v.Pre = nil
 	v.Build = nil
 
-	finalVer := fmt.Sprintf("%s", v)
+	finalVer := v.String()
 	return finalVer, nil
 }
