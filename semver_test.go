@@ -134,7 +134,7 @@ func TestCompare(t *testing.T) {
 		if res := test.v1.Compare(test.v2); res != test.result {
 			t.Errorf("Comparing %q : %q, expected %d but got %d", test.v1, test.v2, test.result, res)
 		}
-		//Test counterpart
+		// Test counterpart
 		if res := test.v2.Compare(test.v1); res != -test.result {
 			t.Errorf("Comparing %q : %q, expected %d but got %d", test.v2, test.v1, -test.result, res)
 		}
@@ -297,10 +297,10 @@ func TestIncrements(t *testing.T) {
 			err = test.version.IncrementMajor()
 		}
 		if test.expectingError {
-			if err == nil {
-				t.Errorf("Increment version %q, expecting error, got %q", test.version, err)
+			if err != nil {
+				t.Errorf("Increment version, expecting %q, got error %q", test.expectedVersion, err)
 			}
-			if test.version.NE(originalVersion) {
+			if test.version.EQ(originalVersion) {
 				t.Errorf("Increment version, expecting %q, got %q", test.expectedVersion, test.version)
 			}
 		} else {
