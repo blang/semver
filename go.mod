@@ -1,3 +1,3 @@
-module github.com/notifai/semver/v3
+module github.com/notifai/semver
 
 go 1.14
