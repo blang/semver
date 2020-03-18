@@ -1,1 +1,3 @@
-module github.com/blang/semver
+module github.com/notifai/semver
+
+go 1.14
