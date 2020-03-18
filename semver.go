@@ -38,28 +38,47 @@ func (v Version) String() string {
 	b = append(b, '.')
 	b = strconv.AppendUint(b, v.Patch, 10)
 
-	if len(v.Pre) > 0 {
+	if pre := v.PreStr(); pre != "" {
 		b = append(b, '-')
-		b = append(b, v.Pre[0].String()...)
-
-		for _, pre := range v.Pre[1:] {
-			b = append(b, '.')
-			b = append(b, pre.String()...)
-		}
+		b = append(b, pre...)
 	}
 
-	if len(v.Build) > 0 {
+	if build := v.BuildStr(); build != "" {
 		b = append(b, '+')
-		b = append(b, v.Build[0]...)
-
-		for _, build := range v.Build[1:] {
-			b = append(b, '.')
-			b = append(b, build...)
-		}
+		b = append(b, build...)
 	}
 
 	return string(b)
 }
+
+func (v Version) PreStr() string {
+	if len(v.Pre) == 0 {
+		return ""
+	}
+
+	res := v.Pre[0].String()
+
+	for _, pre := range v.Pre[1:] {
+		res += "." + pre.String()
+	}
+
+	return res
+}
+
+func (v Version) BuildStr() string {
+	if len(v.Build) == 0 {
+		return ""
+	}
+
+	res := v.Build[0]
+
+	for _, build := range v.Build[1:] {
+		res += "." + build
+	}
+
+	return res
+}
+
 
 // Equals checks if v is equal to o.
 func (v Version) Equals(o Version) bool {
