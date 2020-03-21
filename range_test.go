@@ -17,7 +17,7 @@ type comparatorTest struct {
 }
 
 func TestParseComparator(t *testing.T) {
-	compatorTests := []comparatorTest{
+	comparatorTests := []comparatorTest{
 		{">", testGT},
 		{">=", testGE},
 		{"<", testLT},
@@ -33,7 +33,7 @@ func TestParseComparator(t *testing.T) {
 		{">>", nil},
 	}
 
-	for _, tc := range compatorTests {
+	for _, tc := range comparatorTests {
 		if c := parseComparator(tc.input); c == nil {
 			if tc.comparator != nil {
 				t.Errorf("Comparator nil for case %q\n", tc.input)
@@ -489,10 +489,15 @@ func TestParseRange(t *testing.T) {
 
 	for _, tc := range tests {
 		r, err := ParseRange(tc.i)
+		if err != nil && r != nil {
+			t.Errorf("Range returned not nil with error %q: %s", tc.i, err)
+		}
+
 		if err != nil && tc.t != nil {
 			t.Errorf("Error parsing range %q: %s", tc.i, err)
 			continue
 		}
+
 		for _, tvc := range tc.t {
 			v := MustParse(tvc.v)
 			if res := r(v); res != tvc.b {

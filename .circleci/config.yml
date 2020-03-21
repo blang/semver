@@ -1,0 +1,70 @@
+version: 2.1
+docker_job_setup: &docker_job
+  docker:
+    - image: circleci/golang:1.14
+  working_directory: /go/src/github.com/troian/semver
+
+attach_workspace: &workspace
+  attach_workspace:
+    at: /go/src/github.com/troian
+
+orbs:
+  codecov: codecov/codecov@1.0.5
+  docker: circleci/docker@0.5.20
+
+jobs:
+  pull-sources:
+    <<: *docker_job
+    steps:
+      - checkout
+      - run:
+          name: go mod tidy
+          command: go mod tidy
+      - persist_to_workspace:
+          root: /go/src/github.com/troian
+          paths:
+            - semver
+  lint:
+    <<: *docker_job
+    steps:
+      - <<: *workspace
+      - run:
+          name: Install golangci-lint
+          command: |
+            go get -u github.com/golangci/golangci-lint/cmd/golangci-lint
+      - run:
+          name: lint
+          command: |
+            golangci-lint run
+  test:
+    <<: *docker_job
+    steps:
+      - <<: *workspace
+      - run:
+          shell: /bin/bash
+          name: Tests
+          command: |
+            ./go.test.codecov.sh
+      - codecov/upload:
+          file: coverage.txt
+   example:
+     <<: *docker_job
+     steps:
+       - <<: *workspace
+       - run:
+           name: Build example
+           command: cd example && go build
+workflows:
+  version: 2.1
+  test-on-commit:
+    jobs:
+      - pull-sources:
+      - lint:
+          requires:
+            - pull-sources
+      - test:
+          requires:
+            - lint
+      - example:
+          requires:
+            - test

@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/notifai/semver"
+	"github.com/troian/semver"
 )
 
 func main() {
@@ -11,24 +11,25 @@ func main() {
 	if err != nil {
 		fmt.Printf("Error while parsing (not valid): %q", err)
 	}
+
 	fmt.Printf("Version to string: %q\n", v)
 
-	fmt.Printf("Major: %d\n", v.Major)
-	fmt.Printf("Minor: %d\n", v.Minor)
-	fmt.Printf("Patch: %d\n", v.Patch)
+	fmt.Printf("Major: %d\n", v.Major())
+	fmt.Printf("Minor: %d\n", v.Minor())
+	fmt.Printf("Patch: %d\n", v.Patch())
 
 	// Prerelease versions
-	if len(v.Pre) > 0 {
+	if pre := v.Prerel(); len(pre) > 0 {
 		fmt.Println("Prerelease versions:")
-		for i, pre := range v.Pre {
+		for i, pre := range pre {
 			fmt.Printf("%d: %q\n", i, pre)
 		}
 	}
 
-	// Build meta data
-	if len(v.Build) > 0 {
-		fmt.Println("Build meta data:")
-		for i, build := range v.Build {
+	// Build metadata
+	if len(v.Build()) > 0 {
+		fmt.Println("Build metadata:")
+		for i, build := range v.Build() {
 			fmt.Printf("%d: %q\n", i, build)
 		}
 	}
@@ -50,10 +51,13 @@ func main() {
 	fmt.Printf("%q is less than equal %q: %t\n", v, v, v.LTE(v))
 
 	fmt.Println("\nManipulate Version in place:")
-	v.Pre[0], err = semver.NewPRVersion("beta")
-	if err != nil {
+	var pre semver.PRVersion
+	if pre, err = semver.NewPRVersion("beta"); err != nil {
 		fmt.Printf("Error parsing pre release version: %q", err)
 	}
+
+	v.SetPrerel([]semver.PRVersion{pre})
+
 	fmt.Printf("Version to string: %q\n", v)
 
 	fmt.Println("\nCompare Prerelease versions:")
@@ -65,20 +69,18 @@ func main() {
 	fmt.Printf("%q is equal to %q: Compare == %d\n", pre1, pre1, pre1.Compare(pre1))
 
 	fmt.Println("\nValidate versions:")
-	v.Build[0] = "?"
+	v.SetBuild([]string{"?"})
 
-	err = v.Validate()
-	if err != nil {
+	if err = v.Validate(); err != nil {
 		fmt.Printf("Validation failed: %s\n", err)
 	}
 
-	fmt.Println("Create valid build meta data:")
+	fmt.Println("Create valid build metadata:")
 	b1, _ := semver.NewBuildVersion("build123")
-	v.Build[0] = b1
+	v.SetBuild([]string{b1})
 	fmt.Printf("Version with new build version %q\n", v)
 
-	_, err = semver.NewBuildVersion("build?123")
-	if err != nil {
+	if _, err = semver.NewBuildVersion("build?123"); err != nil {
 		fmt.Printf("Create build version failed: %s\n", err)
 	}
 }

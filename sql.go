@@ -1,27 +1,35 @@
 package semver
 
 import (
+	"database/sql"
 	"database/sql/driver"
 	"fmt"
 )
 
+var _ sql.Scanner = (*Version)(nil)
+var _ driver.Value = (*Version)(nil)
+
 // Scan implements the database/sql.Scanner interface.
-func (v *Version) Scan(src interface{}) (err error) {
+func (v *Version) Scan(src interface{}) error {
 	var str string
-	switch src := src.(type) {
+	switch tSrc := src.(type) {
 	case string:
-		str = src
+		str = tSrc
 	case []byte:
-		str = string(src)
+		str = string(tSrc)
 	default:
 		return fmt.Errorf("version.Scan: cannot convert %T to string", src)
 	}
 
-	if t, err := Parse(str); err == nil {
-		*v = t
+	t, err := Parse(str)
+
+	if err != nil {
+		return err
 	}
 
-	return
+	*v = t
+
+	return nil
 }
 
 // Value implements the database/sql/driver.Valuer interface.

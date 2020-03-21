@@ -16,7 +16,7 @@ const (
 	patchWildcard wildcardType = 3
 )
 
-func wildcardTypefromInt(i int) wildcardType {
+func wildcardTypeFromInt(i int) wildcardType {
 	switch i {
 	case 1:
 		return majorWildcard
@@ -59,9 +59,9 @@ type versionRange struct {
 
 // rangeFunc creates a Range from the given versionRange.
 func (vr *versionRange) rangeFunc() Range {
-	return Range(func(v Version) bool {
+	return func(v Version) bool {
 		return vr.c(v, vr.v)
-	})
+	}
 }
 
 // Range represents a range of versions.
@@ -73,16 +73,16 @@ type Range func(Version) bool
 
 // OR combines the existing Range with another Range using logical OR.
 func (rf Range) OR(f Range) Range {
-	return Range(func(v Version) bool {
+	return func(v Version) bool {
 		return rf(v) || f(v)
-	})
+	}
 }
 
 // AND combines the existing Range with another Range using logical AND.
 func (rf Range) AND(f Range) Range {
-	return Range(func(v Version) bool {
+	return func(v Version) bool {
 		return rf(v) && f(v)
-	})
+	}
 }
 
 // ParseRange parses a range and returns a Range.
@@ -110,26 +110,33 @@ func (rf Range) AND(f Range) Range {
 //
 //  - `>1.0.0 <2.0.0 || >3.0.0 !4.2.1` would match `1.2.3`, `1.9.9`, `3.1.1`, but not `4.2.1`, `2.1.1`
 func ParseRange(s string) (Range, error) {
+	var err error
+	var orParts [][]string
+	var expandedParts [][]string
+
 	parts := splitAndTrim(s)
-	orParts, err := splitORParts(parts)
-	if err != nil {
+
+	if orParts, err = splitORParts(parts); err != nil {
 		return nil, err
 	}
-	expandedParts, err := expandWildcardVersion(orParts)
-	if err != nil {
+
+	if expandedParts, err = expandWildcardVersion(orParts); err != nil {
 		return nil, err
 	}
+
 	var orFn Range
 	for _, p := range expandedParts {
 		var andFn Range
 		for _, ap := range p {
-			opStr, vStr, err := splitComparatorVersion(ap)
-			if err != nil {
+			var opStr string
+			var vStr string
+			if opStr, vStr, err = splitComparatorVersion(ap); err != nil {
 				return nil, err
 			}
-			vr, err := buildVersionRange(opStr, vStr)
-			if err != nil {
-				return nil, fmt.Errorf("Could not parse Range %q: %s", ap, err)
+
+			var vr *versionRange
+			if vr, err = buildVersionRange(opStr, vStr); err != nil {
+				return nil, fmt.Errorf("could not parse Range %q: %s", ap, err)
 			}
 			rf := vr.rangeFunc()
 
@@ -140,6 +147,7 @@ func ParseRange(s string) (Range, error) {
 				andFn = andFn.AND(rf)
 			}
 		}
+
 		if orFn == nil {
 			orFn = andFn
 		} else {
@@ -159,15 +167,17 @@ func splitORParts(parts []string) ([][]string, error) {
 	for i, p := range parts {
 		if p == "||" {
 			if i == 0 {
-				return nil, fmt.Errorf("First element in range is '||'")
+				return nil, fmt.Errorf("first element in range is '||'")
 			}
 			ORparts = append(ORparts, parts[last:i])
 			last = i + 1
 		}
 	}
+
 	if last == len(parts) {
-		return nil, fmt.Errorf("Last element in range is '||'")
+		return nil, fmt.Errorf("last element in range is '||'")
 	}
+
 	ORparts = append(ORparts, parts[last:])
 	return ORparts, nil
 }
@@ -177,11 +187,11 @@ func splitORParts(parts []string) ([][]string, error) {
 func buildVersionRange(opStr, vStr string) (*versionRange, error) {
 	c := parseComparator(opStr)
 	if c == nil {
-		return nil, fmt.Errorf("Could not parse comparator %q in %q", opStr, strings.Join([]string{opStr, vStr}, ""))
+		return nil, fmt.Errorf("could not parse comparator %q in %q", opStr, strings.Join([]string{opStr, vStr}, ""))
 	}
 	v, err := Parse(vStr)
 	if err != nil {
-		return nil, fmt.Errorf("Could not parse version %q in %q: %s", vStr, strings.Join([]string{opStr, vStr}, ""), err)
+		return nil, fmt.Errorf("could not parse version %q in %q: %s", vStr, strings.Join([]string{opStr, vStr}, ""), err)
 	}
 
 	return &versionRange{
@@ -238,7 +248,7 @@ func splitAndTrim(s string) (result []string) {
 func splitComparatorVersion(s string) (string, string, error) {
 	i := strings.IndexFunc(s, unicode.IsDigit)
 	if i == -1 {
-		return "", "", fmt.Errorf("Could not get version from string: %q", s)
+		return "", "", fmt.Errorf("could not get version from string: %q", s)
 	}
 	return strings.TrimSpace(s[0:i]), s[i:], nil
 }
@@ -250,7 +260,7 @@ func getWildcardType(vStr string) wildcardType {
 	nparts := len(parts)
 	wildcard := parts[nparts-1]
 
-	possibleWildcardType := wildcardTypefromInt(nparts)
+	possibleWildcardType := wildcardTypeFromInt(nparts)
 	if wildcard == "x" {
 		return possibleWildcardType
 	}
@@ -363,9 +373,13 @@ func expandWildcardVersion(parts [][]string) ([][]string, error) {
 				if shouldIncrementVersion {
 					switch versionWildcardType {
 					case patchWildcard:
-						resultVersion, _ = incrementMinorVersion(flatVersion)
+						if resultVersion, err = incrementMinorVersion(flatVersion); err != nil {
+							return nil, err
+						}
 					case minorWildcard:
-						resultVersion, _ = incrementMajorVersion(flatVersion)
+						if resultVersion, err = incrementMajorVersion(flatVersion); err != nil {
+							return nil, err
+						}
 					}
 				} else {
 					resultVersion = flatVersion
