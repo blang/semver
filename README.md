@@ -7,12 +7,14 @@ Versioning
 ----------
 Old v1-v3 versions exist in the root of the repository for compatiblity reasons and will only receive bug fixes.
 
-The current stable version is [*v4*](v4/).
+The current stable version is [*v4*](v4/) and is fully go-mod compatible.
 
 Usage
 -----
 ```bash
 $ go get github.com/blang/semver/v4
+# Or use fixed versions
+$ go get github.com/blang/semver/v4@v4.0.0
 ```
 Note: Always vendor your dependencies or fix on a specific version tag.
 
@@ -99,7 +101,7 @@ if expectedRange(v) {
 Example
 -----
 
-Have a look at full examples in [examples/main.go](examples/main.go)
+Have a look at full examples in [v4/examples/main.go](v4/examples/main.go)
 
 ```go
 import github.com/blang/semver/v4
