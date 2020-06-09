@@ -235,12 +235,22 @@ func Make(s string) (Version, error) {
 
 // ParseTolerant allows for certain version specifications that do not strictly adhere to semver
 // specs to be parsed by this library. It does so by normalizing versions before passing them to
-// Parse(). It currently trims spaces, removes a "v" prefix, adds a 0 patch number to versions
-// with only major and minor components specified, and removes leading 0s.
+// Parse(). It currently trims spaces, removes a "v" prefix, adds 0s to missing minor and patch versions,
+// and removes leading 0s. PreRelease/Build meta data is preserved.
 func ParseTolerant(s string) (Version, error) {
 	s = strings.TrimSpace(s)
 	s = strings.TrimPrefix(s, "v")
 
+	//Extract PreRelease/Build meta data if any
+	index := strings.IndexRune(s, '-')
+	if buildIndex := strings.IndexRune(s, '+'); buildIndex != -1 && (buildIndex < index || index == -1) {
+		index = buildIndex
+	}
+	var meta string
+	if index != -1 {
+		meta = s[index:]
+		s = s[:index]
+	}
 	// Split into major.minor.(patch+pr+meta)
 	parts := strings.SplitN(s, ".", 3)
 	// Remove leading zeros.
@@ -254,15 +264,11 @@ func ParseTolerant(s string) (Version, error) {
 		}
 	}
 	// Fill up shortened versions.
-	if len(parts) < 3 {
-		if strings.ContainsAny(parts[len(parts)-1], "+-") {
-			return Version{}, errors.New("Short version cannot contain PreRelease/Build meta data")
-		}
-		for len(parts) < 3 {
-			parts = append(parts, "0")
-		}
+	for len(parts) < 3 {
+		parts = append(parts, "0")
 	}
-	s = strings.Join(parts, ".")
+	// Reconstruct the normalized version string
+	s = strings.Join(parts, ".") + meta
 
 	return Parse(s)
 }

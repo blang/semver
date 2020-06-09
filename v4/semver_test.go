@@ -40,6 +40,10 @@ var tolerantFormatTests = []formatTest{
 	{Version{0, 0, 3, nil, nil}, "000.0.03"},
 	{Version{1, 2, 0, nil, nil}, "1.2"},
 	{Version{1, 0, 0, nil, nil}, "1"},
+	{Version{1, 0, 0, []PRVersion{prstr("alpha")}, nil}, "1-alpha"},
+	{Version{1, 2, 0, []PRVersion{prstr("alpha")}, nil}, "1.2-alpha"},
+	{Version{1, 0, 0, nil, []string{"build", "123"}}, "1+build.123"},
+	{Version{1, 2, 0, []PRVersion{prstr("alpha"), prstr("b-eta")}, []string{"123", "b-uild"}}, "1.2-alpha.b-eta+123.b-uild"},
 }
 
 func TestStringer(t *testing.T) {
