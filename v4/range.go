@@ -1,6 +1,8 @@
 package semver
 
 import (
+	"bytes"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -29,28 +31,74 @@ func wildcardTypefromInt(i int) wildcardType {
 	}
 }
 
-type comparator func(Version, Version) bool
+type comparator uint8
 
-var (
-	compEQ comparator = func(v1 Version, v2 Version) bool {
-		return v1.Compare(v2) == 0
-	}
-	compNE = func(v1 Version, v2 Version) bool {
-		return v1.Compare(v2) != 0
-	}
-	compGT = func(v1 Version, v2 Version) bool {
-		return v1.Compare(v2) == 1
-	}
-	compGE = func(v1 Version, v2 Version) bool {
-		return v1.Compare(v2) >= 0
-	}
-	compLT = func(v1 Version, v2 Version) bool {
-		return v1.Compare(v2) == -1
-	}
-	compLE = func(v1 Version, v2 Version) bool {
-		return v1.Compare(v2) <= 0
-	}
+const (
+	compInvalid comparator = iota
+	compEQ
+	compNE
+	compGT
+	compGE
+	compLT
+	compLE
 )
+
+func parseComparator(s string) comparator {
+	switch s {
+	case "==", "", "=":
+		return compEQ
+	case ">":
+		return compGT
+	case ">=":
+		return compGE
+	case "<":
+		return compLT
+	case "<=":
+		return compLE
+	case "!", "!=":
+		return compNE
+	}
+
+	return compInvalid
+}
+
+func (c comparator) compare(v1 Version, v2 Version) bool {
+	switch c {
+	case compEQ:
+		return v1.Compare(v2) == 0
+	case compNE:
+		return v1.Compare(v2) != 0
+	case compGT:
+		return v1.Compare(v2) == 1
+	case compGE:
+		return v1.Compare(v2) >= 0
+	case compLT:
+		return v1.Compare(v2) == -1
+	case compLE:
+		return v1.Compare(v2) <= 0
+	default:
+		panic("invalid comparator")
+	}
+}
+
+func (c comparator) String() string {
+	switch c {
+	case compEQ:
+		return ""
+	case compNE:
+		return "!"
+	case compGT:
+		return ">"
+	case compGE:
+		return ">="
+	case compLT:
+		return "<"
+	case compLE:
+		return "<="
+	default:
+		panic("invalid comparator")
+	}
+}
 
 type versionRange struct {
 	v Version
@@ -58,10 +106,12 @@ type versionRange struct {
 }
 
 // rangeFunc creates a Range from the given versionRange.
-func (vr *versionRange) rangeFunc() Range {
-	return Range(func(v Version) bool {
-		return vr.c(v, vr.v)
-	})
+func (vr *versionRange) Range(v Version) bool {
+	return vr.c.compare(v, vr.v)
+}
+
+func (vr *versionRange) String() string {
+	return vr.c.String() + vr.v.String()
 }
 
 // Range represents a range of versions.
@@ -83,6 +133,58 @@ func (rf Range) AND(f Range) Range {
 	return Range(func(v Version) bool {
 		return rf(v) && f(v)
 	})
+}
+
+// Range rrepresents a range of versions.
+// Ranger is slightly different from Range, that it can be converted back to string.
+// A Ranger can be used to check if a Version satisfies it:
+//
+//     r, err := semver.ParseRanger(">1.0.0 <2.0.0")
+//     r.Range(semver.MustParse("1.1.1") // returns true
+//     r.String() // returns ">1.0.0 <2.0.0" back
+type Ranger interface {
+	Range(b Version) bool
+	fmt.Stringer
+}
+
+type andRange []Ranger
+
+func (r andRange) Range(v Version) bool {
+	for _, i := range r {
+		if !i.Range(v) {
+			return false
+		}
+	}
+	return true
+}
+
+func (r andRange) String() string {
+	strs := make([]string, len(r))
+	for i, item := range r {
+		strs[i] = item.String()
+	}
+
+	return strings.Join(strs, " ")
+}
+
+type orRange []Ranger
+
+func (r orRange) Range(v Version) bool {
+	for _, i := range r {
+		if i.Range(v) {
+			return true
+		}
+	}
+	return false
+}
+
+func (r orRange) String() string {
+	strs := make([]string, len(r))
+	for i, item := range r {
+		strs[i] = item.String()
+	}
+
+	return strings.Join(strs, " || ")
 }
 
 // ParseRange parses a range and returns a Range.
@@ -110,6 +212,15 @@ func (rf Range) AND(f Range) Range {
 //
 //  - `>1.0.0 <2.0.0 || >3.0.0 !4.2.1` would match `1.2.3`, `1.9.9`, `3.1.1`, but not `4.2.1`, `2.1.1`
 func ParseRange(s string) (Range, error) {
+	ranger, err := ParseRanger(s)
+	if err != nil {
+		return nil, err
+	}
+
+	return ranger.Range, nil
+}
+
+func ParseRanger(s string) (Ranger, error) {
 	parts := splitAndTrim(s)
 	orParts, err := splitORParts(parts)
 	if err != nil {
@@ -119,35 +230,38 @@ func ParseRange(s string) (Range, error) {
 	if err != nil {
 		return nil, err
 	}
-	var orFn Range
-	for _, p := range expandedParts {
-		var andFn Range
-		for _, ap := range p {
-			opStr, vStr, err := splitComparatorVersion(ap)
+	var andRanges []Ranger
+	for _, parts := range expandedParts {
+		var ranges []Ranger
+		for _, andParts := range parts {
+			opStr, vStr, err := splitComparatorVersion(andParts)
 			if err != nil {
 				return nil, err
 			}
 			vr, err := buildVersionRange(opStr, vStr)
 			if err != nil {
-				return nil, fmt.Errorf("Could not parse Range %q: %s", ap, err)
+				return nil, fmt.Errorf("Could not parse Range %q: %s", andParts, err)
 			}
-			rf := vr.rangeFunc()
 
-			// Set function
-			if andFn == nil {
-				andFn = rf
-			} else { // Combine with existing function
-				andFn = andFn.AND(rf)
-			}
+			ranges = append(ranges, vr)
 		}
-		if orFn == nil {
-			orFn = andFn
-		} else {
-			orFn = orFn.OR(andFn)
+		switch len(ranges) {
+		case 0:
+			return nil, errors.New("empty range")
+		case 1:
+			andRanges = append(andRanges, ranges[0])
+		default:
+			andRanges = append(andRanges, andRange(ranges))
 		}
-
 	}
-	return orFn, nil
+	switch len(andRanges) {
+	case 0:
+		return nil, errors.New("empty range")
+	case 1:
+		return andRanges[0], nil
+	default:
+		return orRange(andRanges), nil
+	}
 }
 
 // splitORParts splits the already cleaned parts by '||'.
@@ -176,7 +290,7 @@ func splitORParts(parts []string) ([][]string, error) {
 // and builds a versionRange, otherwise an error.
 func buildVersionRange(opStr, vStr string) (*versionRange, error) {
 	c := parseComparator(opStr)
-	if c == nil {
+	if c == compInvalid {
 		return nil, fmt.Errorf("Could not parse comparator %q in %q", opStr, strings.Join([]string{opStr, vStr}, ""))
 	}
 	v, err := Parse(vStr)
@@ -191,14 +305,8 @@ func buildVersionRange(opStr, vStr string) (*versionRange, error) {
 
 }
 
-// inArray checks if a byte is contained in an array of bytes
-func inArray(s byte, list []byte) bool {
-	for _, el := range list {
-		if el == s {
-			return true
-		}
-	}
-	return false
+func containsByte(b []byte, c byte) bool {
+	return bytes.IndexByte(b, c) >= 0
 }
 
 // splitAndTrim splits a range string by spaces and cleans whitespaces
@@ -207,7 +315,7 @@ func splitAndTrim(s string) (result []string) {
 	var lastChar byte
 	excludeFromSplit := []byte{'>', '<', '='}
 	for i := 0; i < len(s); i++ {
-		if s[i] == ' ' && !inArray(lastChar, excludeFromSplit) {
+		if s[i] == ' ' && !containsByte(excludeFromSplit, lastChar) {
 			if last < i-1 {
 				result = append(result, s[last:i])
 			}
@@ -379,31 +487,6 @@ func expandWildcardVersion(parts [][]string) ([][]string, error) {
 	}
 
 	return expandedParts, nil
-}
-
-func parseComparator(s string) comparator {
-	switch s {
-	case "==":
-		fallthrough
-	case "":
-		fallthrough
-	case "=":
-		return compEQ
-	case ">":
-		return compGT
-	case ">=":
-		return compGE
-	case "<":
-		return compLT
-	case "<=":
-		return compLE
-	case "!":
-		fallthrough
-	case "!=":
-		return compNE
-	}
-
-	return nil
 }
 
 // MustParseRange is like ParseRange but panics if the range cannot be parsed.

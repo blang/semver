@@ -34,7 +34,7 @@ func TestParseComparator(t *testing.T) {
 	}
 
 	for _, tc := range compatorTests {
-		if c := parseComparator(tc.input); c == nil {
+		if c := parseComparator(tc.input); c == compInvalid {
 			if tc.comparator != nil {
 				t.Errorf("Comparator nil for case %q\n", tc.input)
 			}
@@ -51,27 +51,27 @@ var (
 )
 
 func testEQ(f comparator) bool {
-	return f(v1, v1) && !f(v1, v2)
+	return f.compare(v1, v1) && !f.compare(v1, v2)
 }
 
 func testNE(f comparator) bool {
-	return !f(v1, v1) && f(v1, v2)
+	return !f.compare(v1, v1) && f.compare(v1, v2)
 }
 
 func testGT(f comparator) bool {
-	return f(v2, v1) && f(v3, v2) && !f(v1, v2) && !f(v1, v1)
+	return f.compare(v2, v1) && f.compare(v3, v2) && !f.compare(v1, v2) && !f.compare(v1, v1)
 }
 
 func testGE(f comparator) bool {
-	return f(v2, v1) && f(v3, v2) && !f(v1, v2)
+	return f.compare(v2, v1) && f.compare(v3, v2) && !f.compare(v1, v2)
 }
 
 func testLT(f comparator) bool {
-	return f(v1, v2) && f(v2, v3) && !f(v2, v1) && !f(v1, v1)
+	return f.compare(v1, v2) && f.compare(v2, v3) && !f.compare(v2, v1) && !f.compare(v1, v1)
 }
 
 func testLE(f comparator) bool {
-	return f(v1, v2) && f(v2, v3) && !f(v2, v1)
+	return f.compare(v1, v2) && f.compare(v2, v3) && !f.compare(v2, v1)
 }
 
 func TestSplitAndTrim(t *testing.T) {
@@ -157,7 +157,7 @@ func TestBuildVersionRange(t *testing.T) {
 				t.Errorf("Invalid for case %q: Expected version %q, got: %q", strings.Join([]string{tc.opStr, tc.vStr}, ""), tv, r.v)
 			}
 			// test comparator
-			if r.c == nil {
+			if r.c == compInvalid {
 				t.Errorf("Invalid for case %q: got nil comparator", strings.Join([]string{tc.opStr, tc.vStr}, ""))
 				continue
 			}
@@ -299,8 +299,7 @@ func TestVersionRangeToRange(t *testing.T) {
 		v: MustParse("1.2.3"),
 		c: compLT,
 	}
-	rf := vr.rangeFunc()
-	if !rf(MustParse("1.2.2")) || rf(MustParse("1.2.3")) {
+	if !vr.Range((MustParse("1.2.2"))) || vr.Range(MustParse("1.2.3")) {
 		t.Errorf("Invalid conversion to range func")
 	}
 }
