@@ -441,6 +441,32 @@ func TestFinalizeVersion(t *testing.T) {
 	}
 }
 
+func TestMarshalText(t *testing.T) {
+	for _, test := range formatTests {
+		res, err := test.v.MarshalText()
+		if err != nil {
+			t.Fatalf("Unexpected error %q", err)
+		}
+		if string(res) != test.result {
+			t.Errorf("MarshalText, expected %q but got %q", test.result, string(res))
+		}
+	}
+}
+
+func TestUnmarshalText(t *testing.T) {
+	for _, test := range formatTests {
+		var v Version
+		err := v.UnmarshalText([]byte(test.result))
+		if err != nil {
+			t.Fatalf("Unexpected error %q", err)
+		} else if comp := v.Compare(test.v); comp != 0 {
+			t.Errorf("Parsing, expected %q but got %q, comp: %d ", test.v, v, comp)
+		} else if err := v.Validate(); err != nil {
+			t.Errorf("Error validating parsed version %q: %q", test.v, err)
+		}
+	}
+}
+
 func BenchmarkParseSimple(b *testing.B) {
 	const VERSION = "0.0.1"
 	b.ReportAllocs()
