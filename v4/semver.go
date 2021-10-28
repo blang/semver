@@ -221,6 +221,23 @@ func (v Version) Validate() error {
 	return nil
 }
 
+// MarshalText implements the encoding.TextMarshaler interface.
+func (v Version) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+// UnmarshalText implements the encoding.TextUnmarshaler interface.
+func (v *Version) UnmarshalText(data []byte) error {
+	value, err := Parse(string(data))
+	if err != nil {
+		return err
+	}
+
+	*v = value
+
+	return nil
+}
+
 // New is an alias for Parse and returns a pointer, parses version string and returns a validated Version or error
 func New(s string) (*Version, error) {
 	v, err := Parse(s)
