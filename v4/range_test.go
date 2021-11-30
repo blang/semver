@@ -272,6 +272,7 @@ func TestExpandWildcardVersion(t *testing.T) {
 		o [][]string
 	}{
 		{[][]string{{"foox"}}, nil},
+		{[][]string{{"0.1.0-x"}}, [][]string{{"0.1.0-x"}}},
 		{[][]string{{">=1.2.x"}}, [][]string{{">=1.2.0"}}},
 		{[][]string{{"<=1.2.x"}}, [][]string{{"<1.3.0"}}},
 		{[][]string{{">1.2.x"}}, [][]string{{">=1.3.0"}}},
@@ -484,6 +485,9 @@ func TestParseRange(t *testing.T) {
 			{"2.0.1", true},
 			{"2.9.9", true},
 			{"3.0.0", false},
+		}},
+		{"0.1.0-x", []tv{
+			{"0.1.0-x", true},
 		}},
 	}
 

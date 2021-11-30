@@ -327,12 +327,13 @@ func expandWildcardVersion(parts [][]string) ([][]string, error) {
 	for _, p := range parts {
 		var newParts []string
 		for _, ap := range p {
-			if strings.Contains(ap, "x") {
-				opStr, vStr, err := splitComparatorVersion(ap)
-				if err != nil {
-					return nil, err
-				}
+			
+			opStr, vStr, err := splitComparatorVersion(ap)
+			if err != nil {
+				return nil, err
+			}
 
+			if strings.Contains(ap, ".x") {
 				versionWildcardType := getWildcardType(vStr)
 				flatVersion := createVersionFromWildcard(vStr)
 
