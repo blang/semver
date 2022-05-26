@@ -68,7 +68,7 @@ func (vr *versionRange) rangeFunc() Range {
 // A Range can be used to check if a Version satisfies it:
 //
 //     range, err := semver.ParseRange(">1.0.0 <2.0.0")
-//     range(semver.MustParse("1.1.1") // returns true
+//     range(semver.MustParse("1.1.1")) // returns true
 type Range func(Version) bool
 
 // OR combines the existing Range with another Range using logical OR.
