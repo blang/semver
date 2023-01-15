@@ -308,20 +308,16 @@ func TestRangeAND(t *testing.T) {
 	v := MustParse("1.2.2")
 	v1 := MustParse("1.2.1")
 	v2 := MustParse("1.2.3")
-	rf1 := Range(func(v Version) bool {
-		return v.GT(v1)
-	})
-	rf2 := Range(func(v Version) bool {
-		return v.LT(v2)
-	})
-	rf := rf1.AND(rf2)
-	if rf(v1) {
+	rf1 := Ranger(&versionRange{v: MustParse("1.2.1"), c: compGT})
+	rf2 := Ranger(&versionRange{v: MustParse("1.2.3"), c: compLT})
+	rf := andRange{rf1, rf2}
+	if rf.Range(v1) {
 		t.Errorf("Invalid rangefunc, accepted: %s", v1)
 	}
-	if rf(v2) {
+	if rf.Range(v2) {
 		t.Errorf("Invalid rangefunc, accepted: %s", v2)
 	}
-	if !rf(v) {
+	if !rf.Range(v) {
 		t.Errorf("Invalid rangefunc, did not accept: %s", v)
 	}
 }
@@ -335,17 +331,11 @@ func TestRangeOR(t *testing.T) {
 		{MustParse("1.2.2"), false},
 		{MustParse("1.2.4"), true},
 	}
-	v1 := MustParse("1.2.1")
-	v2 := MustParse("1.2.3")
-	rf1 := Range(func(v Version) bool {
-		return v.LT(v1)
-	})
-	rf2 := Range(func(v Version) bool {
-		return v.GT(v2)
-	})
-	rf := rf1.OR(rf2)
+	rf1 := Ranger(&versionRange{v: MustParse("1.2.1"), c: compLT})
+	rf2 := Ranger(&versionRange{v: MustParse("1.2.3"), c: compGT})
+	rf := orRange{rf1, rf2}
 	for _, tc := range tests {
-		if r := rf(tc.v); r != tc.b {
+		if r := rf.Range(tc.v); r != tc.b {
 			t.Errorf("Invalid for case %q: Expected %t, got %t", tc.v, tc.b, r)
 		}
 	}
@@ -494,7 +484,7 @@ func TestParseRange(t *testing.T) {
 		}
 		for _, tvc := range tc.t {
 			v := MustParse(tvc.v)
-			if res := r(v); res != tvc.b {
+			if res := r.Range(v); res != tvc.b {
 				t.Errorf("Invalid for case %q matching %q: Expected %t, got: %t", tc.i, tvc.v, tvc.b, res)
 			}
 		}
@@ -505,7 +495,7 @@ func TestParseRange(t *testing.T) {
 func TestMustParseRange(t *testing.T) {
 	testCase := ">1.2.2 <1.2.4 || >=2.0.0 <3.0.0"
 	r := MustParseRange(testCase)
-	if !r(MustParse("1.2.3")) {
+	if !r.Range(MustParse("1.2.3")) {
 		t.Errorf("Unexpected range behavior on MustParseRange")
 	}
 }
@@ -553,7 +543,7 @@ func BenchmarkRangeMatchSimple(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		r(v)
+		r.Range(v)
 	}
 }
 
@@ -564,7 +554,7 @@ func BenchmarkRangeMatchAverage(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		r(v)
+		r.Range(v)
 	}
 }
 
@@ -575,6 +565,6 @@ func BenchmarkRangeMatchComplex(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		r(v)
+		r.Range(v)
 	}
 }

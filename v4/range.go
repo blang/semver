@@ -31,6 +31,10 @@ func wildcardTypefromInt(i int) wildcardType {
 	}
 }
 
+//----------------------------------------------------------------------------------------------------------//
+//
+//----------------------------------------------------------------------------------------------------------//
+
 type comparator uint8
 
 const (
@@ -100,6 +104,10 @@ func (c comparator) String() string {
 	}
 }
 
+//----------------------------------------------------------------------------------------------------------//
+//
+//----------------------------------------------------------------------------------------------------------//
+
 type versionRange struct {
 	v Version
 	c comparator
@@ -115,27 +123,6 @@ func (vr *versionRange) String() string {
 }
 
 // Range represents a range of versions.
-// A Range can be used to check if a Version satisfies it:
-//
-//     range, err := semver.ParseRange(">1.0.0 <2.0.0")
-//     range(semver.MustParse("1.1.1") // returns true
-type Range func(Version) bool
-
-// OR combines the existing Range with another Range using logical OR.
-func (rf Range) OR(f Range) Range {
-	return Range(func(v Version) bool {
-		return rf(v) || f(v)
-	})
-}
-
-// AND combines the existing Range with another Range using logical AND.
-func (rf Range) AND(f Range) Range {
-	return Range(func(v Version) bool {
-		return rf(v) && f(v)
-	})
-}
-
-// Range rrepresents a range of versions.
 // Ranger is slightly different from Range, that it can be converted back to string.
 // A Ranger can be used to check if a Version satisfies it:
 //
@@ -187,6 +174,15 @@ func (r orRange) String() string {
 	return strings.Join(strs, " || ")
 }
 
+// MustParseRange is like ParseRange but panics if the range cannot be parsed.
+func MustParseRange(s string) Ranger {
+	r, err := ParseRange(s)
+	if err != nil {
+		panic(`semver: ParseRange(` + s + `): ` + err.Error())
+	}
+	return r
+}
+
 // ParseRange parses a range and returns a Range.
 // If the range could not be parsed an error is returned.
 //
@@ -211,16 +207,7 @@ func (r orRange) String() string {
 // Ranges can be combined by both AND and OR
 //
 //  - `>1.0.0 <2.0.0 || >3.0.0 !4.2.1` would match `1.2.3`, `1.9.9`, `3.1.1`, but not `4.2.1`, `2.1.1`
-func ParseRange(s string) (Range, error) {
-	ranger, err := ParseRanger(s)
-	if err != nil {
-		return nil, err
-	}
-
-	return ranger.Range, nil
-}
-
-func ParseRanger(s string) (Ranger, error) {
+func ParseRange(s string) (Ranger, error) {
 	parts := splitAndTrim(s)
 	orParts, err := splitORParts(parts)
 	if err != nil {
@@ -489,11 +476,9 @@ func expandWildcardVersion(parts [][]string) ([][]string, error) {
 	return expandedParts, nil
 }
 
-// MustParseRange is like ParseRange but panics if the range cannot be parsed.
-func MustParseRange(s string) Range {
-	r, err := ParseRange(s)
-	if err != nil {
-		panic(`semver: ParseRange(` + s + `): ` + err.Error())
-	}
-	return r
+type wildcardSemver struct {
+	Major int
+	Minor int
+	Patch int
+	PR    []PRVersion
 }
