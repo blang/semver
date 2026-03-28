@@ -14,6 +14,8 @@ Usage
 ```bash
 $ go get github.com/blang/semver/v4
 # Or use fixed versions
+
+[![gitcgr](https://gitcgr.com/badge/blang/semver.svg)](https://gitcgr.com/blang/semver)
 $ go get github.com/blang/semver/v4@v4.0.0
 ```
 Note: Always vendor your dependencies or fix on a specific version tag.
