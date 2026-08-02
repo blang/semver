@@ -276,12 +276,12 @@ func TestExpandWildcardVersion(t *testing.T) {
 		{[][]string{{"<=1.2.x"}}, [][]string{{"<1.3.0"}}},
 		{[][]string{{">1.2.x"}}, [][]string{{">=1.3.0"}}},
 		{[][]string{{"<1.2.x"}}, [][]string{{"<1.2.0"}}},
-		{[][]string{{"!=1.2.x"}}, [][]string{{"<1.2.0", ">=1.3.0"}}},
+		{[][]string{{"!=1.2.x"}}, [][]string{{"<1.2.0"}, {">=1.3.0"}}},
 		{[][]string{{">=1.x"}}, [][]string{{">=1.0.0"}}},
 		{[][]string{{"<=1.x"}}, [][]string{{"<2.0.0"}}},
 		{[][]string{{">1.x"}}, [][]string{{">=2.0.0"}}},
 		{[][]string{{"<1.x"}}, [][]string{{"<1.0.0"}}},
-		{[][]string{{"!=1.x"}}, [][]string{{"<1.0.0", ">=2.0.0"}}},
+		{[][]string{{"!=1.x"}}, [][]string{{"<1.0.0"}, {">=2.0.0"}}},
 		{[][]string{{"1.2.x"}}, [][]string{{">=1.2.0", "<1.3.0"}}},
 		{[][]string{{"1.x"}}, [][]string{{">=1.0.0", "<2.0.0"}}},
 	}
@@ -460,6 +460,22 @@ func TestParseRange(t *testing.T) {
 			{"1.1.9", false},
 			{"1.2.6", false},
 			{"1.3.0", true},
+		}},
+		// Regression test for issue #80: !=1.0.x should use OR, not AND
+		{"!=1.0.x", []tv{
+			{"0.9.0", true},
+			{"1.0.0", false},
+			{"1.0.5", false},
+			{"1.0.99", false},
+			{"1.1.0", true},
+			{"1.1.1", true},
+			{"2.0.0", true},
+		}},
+		{"!=1.x", []tv{
+			{"0.9.0", true},
+			{"1.0.0", false},
+			{"1.5.0", false},
+			{"2.0.0", true},
 		}},
 		// Combined Expressions
 		{">1.2.2 <1.2.4 || >=2.0.0", []tv{
