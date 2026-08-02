@@ -326,6 +326,8 @@ func expandWildcardVersion(parts [][]string) ([][]string, error) {
 	var expandedParts [][]string
 	for _, p := range parts {
 		var newParts []string
+		// Track != wildcard expansions that need OR logic
+		var neqOrParts [][]string
 		for _, ap := range p {
 			if strings.Contains(ap, "x") {
 				opStr, vStr, err := splitComparatorVersion(ap)
@@ -354,9 +356,17 @@ func expandWildcardVersion(parts [][]string) ([][]string, error) {
 					resultOperator = "<"
 					shouldIncrementVersion = true
 				case "!=", "!":
-					newParts = append(newParts, "<"+flatVersion)
-					resultOperator = ">="
-					shouldIncrementVersion = true
+					// != with wildcard means "outside this range", which requires OR:
+					// <flatVersion OR >=incrementedVersion
+					var incrementedVersion string
+					switch versionWildcardType {
+					case patchWildcard:
+						incrementedVersion, _ = incrementMinorVersion(flatVersion)
+					case minorWildcard:
+						incrementedVersion, _ = incrementMajorVersion(flatVersion)
+					}
+					neqOrParts = append(neqOrParts, []string{"<" + flatVersion}, []string{">=" + incrementedVersion})
+					continue
 				}
 
 				var resultVersion string
@@ -375,7 +385,15 @@ func expandWildcardVersion(parts [][]string) ([][]string, error) {
 			}
 			newParts = append(newParts, ap)
 		}
-		expandedParts = append(expandedParts, newParts)
+		if len(neqOrParts) == 0 {
+			expandedParts = append(expandedParts, newParts)
+		} else {
+			// Each != wildcard produces OR branches. Combine with remaining AND parts.
+			for _, neqPart := range neqOrParts {
+				combined := append(append([]string{}, newParts...), neqPart...)
+				expandedParts = append(expandedParts, combined)
+			}
+		}
 	}
 
 	return expandedParts, nil
