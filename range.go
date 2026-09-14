@@ -320,8 +320,12 @@ func incrementMinorVersion(vStr string) (string, error) {
 //
 // * when dealing with wildcards without
 // version operator:
-// 1.2.x       will become    >= 1.2.0 < 1.3.0
-// 1.x         will become    >= 1.0.0 < 2.0.0
+// 1.2.x       will become    >= 1.2.0-0 < 1.3.0
+// 1.x         will become    >= 1.0.0-0 < 2.0.0
+//
+// The "-0" prerelease on the lower bound includes prereleases of the
+// .0 patch (e.g. 1.2.0-alpha satisfies 1.2.x). Numeric 0 is the lowest
+// prerelease identifier, so this does not exclude later prereleases.
 func expandWildcardVersion(parts [][]string) ([][]string, error) {
 	var expandedParts [][]string
 	for _, p := range parts {
@@ -350,7 +354,8 @@ func expandWildcardVersion(parts [][]string) ([][]string, error) {
 					resultOperator = "<"
 					shouldIncrementVersion = true
 				case "", "=", "==":
-					newParts = append(newParts, ">="+flatVersion)
+					// Include prereleases of the wildcard's .0 version.
+					newParts = append(newParts, ">="+flatVersion+"-0")
 					resultOperator = "<"
 					shouldIncrementVersion = true
 				case "!=", "!":
