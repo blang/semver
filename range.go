@@ -208,7 +208,9 @@ func splitAndTrim(s string) (result []string) {
 	excludeFromSplit := []byte{'>', '<', '='}
 	for i := 0; i < len(s); i++ {
 		if s[i] == ' ' && !inArray(lastChar, excludeFromSplit) {
-			if last < i-1 {
+			// last < i-1 dropped a one-character field, so ">1.2.2 2"
+			// parsed as ">1.2.2".
+			if last < i {
 				result = append(result, s[last:i])
 			}
 			last = i + 1
@@ -216,7 +218,7 @@ func splitAndTrim(s string) (result []string) {
 			lastChar = s[i]
 		}
 	}
-	if last < len(s)-1 {
+	if last < len(s) {
 		result = append(result, s[last:])
 	}
 

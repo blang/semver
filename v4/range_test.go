@@ -579,3 +579,24 @@ func BenchmarkRangeMatchComplex(b *testing.B) {
 		r(v)
 	}
 }
+
+func TestParseRangeSingleCharField(t *testing.T) {
+	// A one-character field was dropped, so these parsed as ">1.2.2"
+	// and 9.0.0 matched.
+	for _, spec := range []string{">1.2.2 2", ">1.2.2 2 <9.0.0"} {
+		if _, err := ParseRange(spec); err == nil {
+			t.Errorf("ParseRange(%q) returned a range", spec)
+		}
+	}
+
+	r, err := ParseRange(">1.2.2  <1.2.4")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !r(MustParse("1.2.3")) {
+		t.Error("1.2.3 should match")
+	}
+	if r(MustParse("9.0.0")) {
+		t.Error("9.0.0 should not match")
+	}
+}
