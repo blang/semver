@@ -205,7 +205,7 @@ func inArray(s byte, list []byte) bool {
 func splitAndTrim(s string) (result []string) {
 	last := 0
 	var lastChar byte
-	excludeFromSplit := []byte{'>', '<', '='}
+	excludeFromSplit := []byte{'>', '<', '=', '!'}
 	for i := 0; i < len(s); i++ {
 		if s[i] == ' ' && !inArray(lastChar, excludeFromSplit) {
 			if last < i-1 {
@@ -252,6 +252,9 @@ func getWildcardType(vStr string) wildcardType {
 
 	possibleWildcardType := wildcardTypefromInt(nparts)
 	if wildcard == "x" {
+		if nparts == 3 && parts[1] == "x" {
+			return minorWildcard
+		}
 		return possibleWildcardType
 	}
 
@@ -309,14 +312,14 @@ func incrementMinorVersion(vStr string) (string, error) {
 // <= 1.2.x    will become    <  1.3.0
 // >  1.2.x    will become    >= 1.3.0
 // <  1.2.x    will become    <  1.2.0
-// != 1.2.x    will become    <  1.2.0 >= 1.3.0
+// != 1.2.x    will become    <  1.2.0 || >= 1.3.0
 //
 // * when dealing with minor wildcards:
 // >= 1.x      will become    >= 1.0.0
 // <= 1.x      will become    <  2.0.0
 // >  1.x      will become    >= 2.0.0
 // <  1.0      will become    <  1.0.0
-// != 1.x      will become    <  1.0.0 >= 2.0.0
+// != 1.x      will become    <  1.0.0 || >= 2.0.0
 //
 // * when dealing with wildcards without
 // version operator:
@@ -325,7 +328,11 @@ func incrementMinorVersion(vStr string) (string, error) {
 func expandWildcardVersion(parts [][]string) ([][]string, error) {
 	var expandedParts [][]string
 	for _, p := range parts {
-		var newParts []string
+		currentConjunctions := [][]string{{}}
+		if len(p) == 0 {
+			expandedParts = append(expandedParts, []string{})
+			continue
+		}
 		for _, ap := range p {
 			if strings.Contains(ap, "x") {
 				opStr, vStr, err := splitComparatorVersion(ap)
@@ -338,6 +345,7 @@ func expandWildcardVersion(parts [][]string) ([][]string, error) {
 
 				var resultOperator string
 				var shouldIncrementVersion bool
+				isDisjunction := false
 				switch opStr {
 				case ">":
 					resultOperator = ">="
@@ -350,13 +358,15 @@ func expandWildcardVersion(parts [][]string) ([][]string, error) {
 					resultOperator = "<"
 					shouldIncrementVersion = true
 				case "", "=", "==":
-					newParts = append(newParts, ">="+flatVersion)
 					resultOperator = "<"
 					shouldIncrementVersion = true
+					for i := range currentConjunctions {
+						currentConjunctions[i] = append(currentConjunctions[i], ">="+flatVersion)
+					}
 				case "!=", "!":
-					newParts = append(newParts, "<"+flatVersion)
 					resultOperator = ">="
 					shouldIncrementVersion = true
+					isDisjunction = true
 				}
 
 				var resultVersion string
@@ -372,10 +382,30 @@ func expandWildcardVersion(parts [][]string) ([][]string, error) {
 				}
 
 				ap = resultOperator + resultVersion
+
+				if isDisjunction {
+					var nextConjunctions [][]string
+					for _, conj := range currentConjunctions {
+						c1 := make([]string, len(conj), len(conj)+1)
+						copy(c1, conj)
+						c1 = append(c1, "<"+flatVersion)
+
+						c2 := make([]string, len(conj), len(conj)+1)
+						copy(c2, conj)
+						c2 = append(c2, ap)
+
+						nextConjunctions = append(nextConjunctions, c1, c2)
+					}
+					currentConjunctions = nextConjunctions
+					continue
+				}
 			}
-			newParts = append(newParts, ap)
+
+			for i := range currentConjunctions {
+				currentConjunctions[i] = append(currentConjunctions[i], ap)
+			}
 		}
-		expandedParts = append(expandedParts, newParts)
+		expandedParts = append(expandedParts, currentConjunctions...)
 	}
 
 	return expandedParts, nil

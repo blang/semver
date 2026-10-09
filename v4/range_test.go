@@ -201,6 +201,7 @@ func TestGetWildcardType(t *testing.T) {
 	wildcardTypeTests := []wildcardTypeTest{
 		{"x", majorWildcard},
 		{"1.x", minorWildcard},
+		{"1.x.x", minorWildcard},
 		{"1.2.x", patchWildcard},
 		{"fo.o.b.ar", noneWildcard},
 	}
@@ -276,14 +277,17 @@ func TestExpandWildcardVersion(t *testing.T) {
 		{[][]string{{"<=1.2.x"}}, [][]string{{"<1.3.0"}}},
 		{[][]string{{">1.2.x"}}, [][]string{{">=1.3.0"}}},
 		{[][]string{{"<1.2.x"}}, [][]string{{"<1.2.0"}}},
-		{[][]string{{"!=1.2.x"}}, [][]string{{"<1.2.0", ">=1.3.0"}}},
+		{[][]string{{"!=1.2.x"}}, [][]string{{"<1.2.0"}, {">=1.3.0"}}},
 		{[][]string{{">=1.x"}}, [][]string{{">=1.0.0"}}},
 		{[][]string{{"<=1.x"}}, [][]string{{"<2.0.0"}}},
 		{[][]string{{">1.x"}}, [][]string{{">=2.0.0"}}},
 		{[][]string{{"<1.x"}}, [][]string{{"<1.0.0"}}},
-		{[][]string{{"!=1.x"}}, [][]string{{"<1.0.0", ">=2.0.0"}}},
+		{[][]string{{"!=1.x"}}, [][]string{{"<1.0.0"}, {">=2.0.0"}}},
+		{[][]string{{"!=1.x.x"}}, [][]string{{"<1.0.0"}, {">=2.0.0"}}},
 		{[][]string{{"1.2.x"}}, [][]string{{">=1.2.0", "<1.3.0"}}},
 		{[][]string{{"1.x"}}, [][]string{{">=1.0.0", "<2.0.0"}}},
+		{[][]string{{">1.0.0", "!=1.2.x"}}, [][]string{{">1.0.0", "<1.2.0"}, {">1.0.0", ">=1.3.0"}}},
+		{[][]string{{"!=1.2.x", "<2.0.0"}}, [][]string{{"<1.2.0", "<2.0.0"}, {">=1.3.0", "<2.0.0"}}},
 	}
 
 	for _, tc := range tests {
@@ -485,6 +489,77 @@ func TestParseRange(t *testing.T) {
 			{"2.9.9", true},
 			{"3.0.0", false},
 		}},
+		// Wildcard inequality expressions (Issue #80)
+		{"!=1.0.x", []tv{
+			{"0.9.0", true},
+			{"1.0.0", false},
+			{"1.0.1", false},
+			{"1.0.9", false},
+			{"1.1.0", true},
+			{"1.1.1", true},
+			{"2.0.0", true},
+		}},
+		{"!1.0.x", []tv{
+			{"0.9.0", true},
+			{"1.0.0", false},
+			{"1.0.1", false},
+			{"1.0.9", false},
+			{"1.1.0", true},
+			{"1.1.1", true},
+			{"2.0.0", true},
+		}},
+		{"!=1.x", []tv{
+			{"0.9.0", true},
+			{"1.0.0", false},
+			{"1.1.1", false},
+			{"1.9.9", false},
+			{"2.0.0", true},
+		}},
+		{"!1.x", []tv{
+			{"0.9.0", true},
+			{"1.0.0", false},
+			{"1.1.1", false},
+			{"1.9.9", false},
+			{"2.0.0", true},
+		}},
+		{"!=1.x.x", []tv{
+			{"0.9.0", true},
+			{"1.0.0", false},
+			{"1.1.1", false},
+			{"1.9.9", false},
+			{"2.0.0", true},
+		}},
+		{">0.5.0 !=1.0.x", []tv{
+			{"0.4.0", false},
+			{"0.6.0", true},
+			{"1.0.0", false},
+			{"1.0.5", false},
+			{"1.1.0", true},
+			{"1.5.0", true},
+		}},
+		{"!=1.0.x <2.0.0", []tv{
+			{"0.9.0", true},
+			{"1.0.0", false},
+			{"1.0.5", false},
+			{"1.1.0", true},
+			{"1.9.0", true},
+			{"2.0.0", false},
+			{"2.1.0", false},
+		}},
+		{">0.5.0 !=1.0.x <2.0.0", []tv{
+			{"0.4.0", false},
+			{"0.6.0", true},
+			{"1.0.0", false},
+			{"1.0.5", false},
+			{"1.1.0", true},
+			{"1.9.0", true},
+			{"2.0.0", false},
+		}},
+		{"!=1.0.x || !=2.0.x", []tv{
+			{"1.0.5", true},
+			{"2.0.5", true},
+			{"3.0.0", true},
+		}},
 	}
 
 	for _, tc := range tests {
@@ -500,6 +575,37 @@ func TestParseRange(t *testing.T) {
 			}
 		}
 
+	}
+}
+
+func TestIssue80WildcardNotEqual(t *testing.T) {
+	versionRange := "!=1.0.x"
+	expectedRange, err := ParseRange(versionRange)
+	if err != nil {
+		t.Fatalf("ParseRange(%q) unexpected error: %s", versionRange, err)
+	}
+
+	testCases := []struct {
+		version  string
+		expected bool
+	}{
+		{"0.9.9", true},
+		{"1.0.0", false},
+		{"1.0.1", false},
+		{"1.0.9", false},
+		{"1.1.0", true},
+		{"1.1.1", true},
+		{"2.0.0", true},
+	}
+
+	for _, tc := range testCases {
+		v, err := Parse(tc.version)
+		if err != nil {
+			t.Fatalf("Parse(%q) unexpected error: %s", tc.version, err)
+		}
+		if res := expectedRange(v); res != tc.expected {
+			t.Errorf("expectedRange(%s) for %q: expected %t, got %t", tc.version, versionRange, tc.expected, res)
+		}
 	}
 }
 
