@@ -57,11 +57,36 @@ type versionRange struct {
 	c comparator
 }
 
+// createComparatorSetRange creates a Range from a slice of versionRange
+// comparators linked by logical AND.
+// A prerelease version will only satisfy the comparator set if at least one
+// comparator in the set has the same [major, minor, patch] tuple and also
+// has a prerelease.
+func createComparatorSetRange(vrs []*versionRange) Range {
+	return Range(func(v Version) bool {
+		if len(vrs) == 0 {
+			return false
+		}
+		for _, vr := range vrs {
+			if !vr.c(v, vr.v) {
+				return false
+			}
+		}
+		if len(v.Pre) > 0 {
+			for _, vr := range vrs {
+				if len(vr.v.Pre) > 0 && vr.v.Major == v.Major && vr.v.Minor == v.Minor && vr.v.Patch == v.Patch {
+					return true
+				}
+			}
+			return false
+		}
+		return true
+	})
+}
+
 // rangeFunc creates a Range from the given versionRange.
 func (vr *versionRange) rangeFunc() Range {
-	return Range(func(v Version) bool {
-		return vr.c(v, vr.v)
-	})
+	return createComparatorSetRange([]*versionRange{vr})
 }
 
 // Range represents a range of versions.
@@ -121,7 +146,7 @@ func ParseRange(s string) (Range, error) {
 	}
 	var orFn Range
 	for _, p := range expandedParts {
-		var andFn Range
+		var vrs []*versionRange
 		for _, ap := range p {
 			opStr, vStr, err := splitComparatorVersion(ap)
 			if err != nil {
@@ -131,21 +156,14 @@ func ParseRange(s string) (Range, error) {
 			if err != nil {
 				return nil, fmt.Errorf("Could not parse Range %q: %s", ap, err)
 			}
-			rf := vr.rangeFunc()
-
-			// Set function
-			if andFn == nil {
-				andFn = rf
-			} else { // Combine with existing function
-				andFn = andFn.AND(rf)
-			}
+			vrs = append(vrs, vr)
 		}
+		andFn := createComparatorSetRange(vrs)
 		if orFn == nil {
 			orFn = andFn
 		} else {
 			orFn = orFn.OR(andFn)
 		}
-
 	}
 	return orFn, nil
 }

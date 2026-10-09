@@ -520,6 +520,71 @@ func TestMustParseRange_panic(t *testing.T) {
 	_ = MustParseRange("invalid version")
 }
 
+func TestIssue73MajorVersionConstraintWithPrereleases(t *testing.T) {
+	ranges := []string{
+		">= 1.x",
+		">= 1.x < 2.x",
+		">= 1.x < 2.x.x",
+		">= 1.x < 2.0.0",
+		"< 2.0.0",
+	}
+	v := MustParse("2.0.0-v2-5")
+
+	for _, rStr := range ranges {
+		r, err := ParseRange(rStr)
+		if err != nil {
+			t.Fatalf("ParseRange(%q) failed: %v", rStr, err)
+		}
+		if r(v) {
+			t.Errorf("Range %q should not match prerelease %q", rStr, v)
+		}
+	}
+}
+
+func TestPrereleaseRangeSatisfaction(t *testing.T) {
+	tests := []struct {
+		rangeStr string
+		version  string
+		expected bool
+	}{
+		{">1.2.3-beta <1.2.5", "1.2.3", true},
+		{">1.2.3-beta <1.2.5", "1.2.3-beta.2", true},
+		{">1.2.3-beta <1.2.5", "1.2.3-gamma", true},
+		{">1.2.3-beta <1.2.5", "1.2.4-beta.2", false},
+		{">1.2.3-beta <1.2.5", "1.2.5-alpha", false},
+		{"<2.0.0-beta", "1.9.9", true},
+		{"<2.0.0-beta", "1.9.9-alpha", false},
+		{"<2.0.0-beta", "2.0.0-alpha", true},
+		{"<2.0.0-beta", "2.0.0-beta", false},
+		{"<2.0.0-beta", "2.0.0-gamma", false},
+		{"<2.0.0-beta", "2.0.0", false},
+		{">=1.0.0-alpha <2.0.0", "1.0.0-alpha.1", true},
+		{">=1.0.0-alpha <2.0.0", "1.0.1-alpha", false},
+		{"1.x || >=2.0.0-0", "2.0.0-v2-5", true},
+		{"1.x || >=2.0.0-0", "1.2.3", true},
+		{"1.x || >=2.0.0-0", "3.0.0-alpha", false},
+		{"0.49.x", "0.49.0", true},
+		{"0.49.x", "0.49.1", true},
+		{"0.49.x", "0.49.0-alpha", false},
+		{"0.49.x", "0.49.1-alpha", false},
+		{"!=1.2.3-alpha", "1.2.3-alpha", false},
+		{"!=1.2.3-alpha", "1.2.3-beta", true},
+		{"!=1.2.3-alpha", "1.2.4", true},
+		{"!=1.2.3-alpha", "1.2.4-beta", false},
+	}
+
+	for _, tc := range tests {
+		r, err := ParseRange(tc.rangeStr)
+		if err != nil {
+			t.Fatalf("ParseRange(%q) failed: %v", tc.rangeStr, err)
+		}
+		v := MustParse(tc.version)
+		if actual := r(v); actual != tc.expected {
+			t.Errorf("ParseRange(%q)(%q): got %t, expected %t", tc.rangeStr, tc.version, actual, tc.expected)
+		}
+	}
+}
+
 func BenchmarkRangeParseSimple(b *testing.B) {
 	const VERSION = ">1.0.0"
 	b.ReportAllocs()
