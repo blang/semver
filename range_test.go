@@ -203,6 +203,9 @@ func TestGetWildcardType(t *testing.T) {
 		{"1.x", minorWildcard},
 		{"1.2.x", patchWildcard},
 		{"fo.o.b.ar", noneWildcard},
+		{"0.1.0-x", noneWildcard},
+		{"1.0.0-alpha.x", noneWildcard},
+		{"1.0.0+build.x", noneWildcard},
 	}
 
 	for _, tc := range wildcardTypeTests {
@@ -272,6 +275,14 @@ func TestExpandWildcardVersion(t *testing.T) {
 		o [][]string
 	}{
 		{[][]string{{"foox"}}, nil},
+		{[][]string{{"0.1.0-x"}}, [][]string{{"0.1.0-x"}}},
+		{[][]string{{">=0.1.0-x"}}, [][]string{{">=0.1.0-x"}}},
+		{[][]string{{"<0.1.0-x"}}, [][]string{{"<0.1.0-x"}}},
+		{[][]string{{"<=0.1.0-x"}}, [][]string{{"<=0.1.0-x"}}},
+		{[][]string{{"!=0.1.0-x"}}, [][]string{{"!=0.1.0-x"}}},
+		{[][]string{{"1.0.0-alpha.x"}}, [][]string{{"1.0.0-alpha.x"}}},
+		{[][]string{{"1.0.0-x.1"}}, [][]string{{"1.0.0-x.1"}}},
+		{[][]string{{"1.0.0+build.x"}}, [][]string{{"1.0.0+build.x"}}},
 		{[][]string{{">=1.2.x"}}, [][]string{{">=1.2.0"}}},
 		{[][]string{{"<=1.2.x"}}, [][]string{{"<1.3.0"}}},
 		{[][]string{{">1.2.x"}}, [][]string{{">=1.3.0"}}},
@@ -484,6 +495,46 @@ func TestParseRange(t *testing.T) {
 			{"2.0.1", true},
 			{"2.9.9", true},
 			{"3.0.0", false},
+		}},
+		{"0.1.0-x", []tv{
+			{"0.1.0-x", true},
+			{"0.1.0-y", false},
+			{"0.1.0", false},
+		}},
+		{">=0.1.0-x", []tv{
+			{"0.1.0-x", true},
+			{"0.1.0-y", true},
+			{"0.1.0", true},
+			{"0.1.0-a", false},
+			{"0.0.9", false},
+		}},
+		{"<0.1.0-x", []tv{
+			{"0.1.0-a", true},
+			{"0.0.9", true},
+			{"0.1.0-x", false},
+			{"0.1.0", false},
+		}},
+		{"<=0.1.0-x", []tv{
+			{"0.1.0-a", true},
+			{"0.1.0-x", true},
+			{"0.1.0-y", false},
+			{"0.1.0", false},
+		}},
+		{"!=0.1.0-x", []tv{
+			{"0.1.0-x", false},
+			{"0.1.0-a", true},
+			{"0.1.0", true},
+		}},
+		{"1.0.0-alpha.x", []tv{
+			{"1.0.0-alpha.x", true},
+			{"1.0.0-alpha.y", false},
+			{"1.0.0-alpha.1", false},
+			{"1.0.0", false},
+		}},
+		{"1.0.0+build.x", []tv{
+			{"1.0.0", true},
+			{"1.0.0+other", true},
+			{"1.0.1", false},
 		}},
 	}
 

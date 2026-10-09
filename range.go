@@ -67,8 +67,8 @@ func (vr *versionRange) rangeFunc() Range {
 // Range represents a range of versions.
 // A Range can be used to check if a Version satisfies it:
 //
-//     range, err := semver.ParseRange(">1.0.0 <2.0.0")
-//     range(semver.MustParse("1.1.1") // returns true
+//	range, err := semver.ParseRange(">1.0.0 <2.0.0")
+//	range(semver.MustParse("1.1.1") // returns true
 type Range func(Version) bool
 
 // OR combines the existing Range with another Range using logical OR.
@@ -108,7 +108,7 @@ func (rf Range) AND(f Range) Range {
 //
 // Ranges can be combined by both AND and OR
 //
-//  - `>1.0.0 <2.0.0 || >3.0.0 !4.2.1` would match `1.2.3`, `1.9.9`, `3.1.1`, but not `4.2.1`, `2.1.1`
+//   - `>1.0.0 <2.0.0 || >3.0.0 !4.2.1` would match `1.2.3`, `1.9.9`, `3.1.1`, but not `4.2.1`, `2.1.1`
 func ParseRange(s string) (Range, error) {
 	parts := splitAndTrim(s)
 	orParts, err := splitORParts(parts)
@@ -246,6 +246,9 @@ func splitComparatorVersion(s string) (string, string, error) {
 // getWildcardType will return the type of wildcard that the
 // passed version contains
 func getWildcardType(vStr string) wildcardType {
+	if strings.ContainsAny(vStr, "-+") {
+		return noneWildcard
+	}
 	parts := strings.Split(vStr, ".")
 	nparts := len(parts)
 	wildcard := parts[nparts-1]
@@ -334,44 +337,46 @@ func expandWildcardVersion(parts [][]string) ([][]string, error) {
 				}
 
 				versionWildcardType := getWildcardType(vStr)
-				flatVersion := createVersionFromWildcard(vStr)
+				if versionWildcardType == patchWildcard || versionWildcardType == minorWildcard {
+					flatVersion := createVersionFromWildcard(vStr)
 
-				var resultOperator string
-				var shouldIncrementVersion bool
-				switch opStr {
-				case ">":
-					resultOperator = ">="
-					shouldIncrementVersion = true
-				case ">=":
-					resultOperator = ">="
-				case "<":
-					resultOperator = "<"
-				case "<=":
-					resultOperator = "<"
-					shouldIncrementVersion = true
-				case "", "=", "==":
-					newParts = append(newParts, ">="+flatVersion)
-					resultOperator = "<"
-					shouldIncrementVersion = true
-				case "!=", "!":
-					newParts = append(newParts, "<"+flatVersion)
-					resultOperator = ">="
-					shouldIncrementVersion = true
-				}
-
-				var resultVersion string
-				if shouldIncrementVersion {
-					switch versionWildcardType {
-					case patchWildcard:
-						resultVersion, _ = incrementMinorVersion(flatVersion)
-					case minorWildcard:
-						resultVersion, _ = incrementMajorVersion(flatVersion)
+					var resultOperator string
+					var shouldIncrementVersion bool
+					switch opStr {
+					case ">":
+						resultOperator = ">="
+						shouldIncrementVersion = true
+					case ">=":
+						resultOperator = ">="
+					case "<":
+						resultOperator = "<"
+					case "<=":
+						resultOperator = "<"
+						shouldIncrementVersion = true
+					case "", "=", "==":
+						newParts = append(newParts, ">="+flatVersion)
+						resultOperator = "<"
+						shouldIncrementVersion = true
+					case "!=", "!":
+						newParts = append(newParts, "<"+flatVersion)
+						resultOperator = ">="
+						shouldIncrementVersion = true
 					}
-				} else {
-					resultVersion = flatVersion
-				}
 
-				ap = resultOperator + resultVersion
+					var resultVersion string
+					if shouldIncrementVersion {
+						switch versionWildcardType {
+						case patchWildcard:
+							resultVersion, _ = incrementMinorVersion(flatVersion)
+						case minorWildcard:
+							resultVersion, _ = incrementMajorVersion(flatVersion)
+						}
+					} else {
+						resultVersion = flatVersion
+					}
+
+					ap = resultOperator + resultVersion
+				}
 			}
 			newParts = append(newParts, ap)
 		}
